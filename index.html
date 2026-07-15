@@ -1,0 +1,1999 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>T2R - Theory To Reality</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+<link rel="preconnect" href="https://tile.openstreetmap.org">
+<link rel="preconnect" href="https://a.tile.openstreetmap.org">
+<link rel="preconnect" href="https://b.tile.openstreetmap.org">
+<link rel="preconnect" href="https://c.tile.openstreetmap.org">
+<style>
+  :root { --green:#1a4d3a; --green-dark:#0f3526; --green-light:#2f7d5e; --sage:#e8f0ea; --sage-2:#f4f8f5; --text:#1c2620; --text-soft:#5a6b62; --border:#e3e9e5; --white:#ffffff; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; color:var(--text); background:var(--white); line-height:1.65; letter-spacing:-0.005em; }
+  h1,h2,h3,h4,h5,h6 { font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,sans-serif; letter-spacing:-0.02em; }
+  a { text-decoration:none; color:inherit; }
+  button { cursor:pointer; font-family:inherit; border:none; background:none; }
+  ul { list-style:none; }
+  nav { position:sticky; top:0; z-index:200; background:rgba(255,255,255,0.98); backdrop-filter:blur(6px); border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; padding:12px 28px; }
+  .nav-left { display:flex; align-items:center; gap:14px; }
+  .logo-badge { width:50px; height:50px; border-radius:50%; background-color:#ffffff; display:flex; align-items:center; justify-content:center; position:relative; flex-shrink:0; overflow:hidden; border:1.5px solid var(--sage); }
+  .logo-badge img { width:100%; height:100%; object-fit:cover; }
+  .logo-text { display:flex; flex-direction:column; line-height:1.05; }
+  .logo-text .t2r { font-family:'Plus Jakarta Sans',sans-serif; font-weight:800; font-size:1.3rem; color:var(--green); letter-spacing:-0.01em; }
+  .logo-text .full { font-size:0.66rem; color:var(--text-soft); letter-spacing:1.5px; text-transform:uppercase; font-weight:600; }
+  .nav-links { display:flex; align-items:center; gap:6px; }
+  .nav-links a { font-size:0.92rem; font-weight:500; color:var(--text-soft); padding:8px 14px; border-radius:7px; transition:all .2s; }
+  .nav-links a:hover { background:var(--sage-2); color:var(--text); }
+  .nav-links a.active { background:var(--sage); color:var(--green); font-weight:700; }
+  .nav-right { display:flex; align-items:center; gap:14px; }
+  .nav-toggle { display:none; font-size:1.5rem; color:var(--green); }
+  @media (max-width:980px) {
+    .nav-links { position:absolute; top:100%; left:0; right:0; background:white; flex-direction:column; align-items:stretch; padding:10px; border-bottom:1px solid var(--border); display:none; gap:2px; z-index:300; }
+    .nav-links.open { display:flex; }
+    .nav-links a { padding:12px 16px; }
+    .nav-toggle { display:block; }
+  }
+  @media (max-width:700px) {
+    nav { padding:10px 16px; }
+    .logo-text .t2r { font-size:1.1rem; }
+    .logo-text .full { display:none; }
+  }
+  .role-overlay { position:fixed; inset:0; background:rgba(15,29,20,0.55); z-index:1000; display:flex; align-items:center; justify-content:center; padding:20px; }
+  .role-box { background:white; border-radius:18px; padding:36px; max-width:380px; width:100%; text-align:center; }
+  .role-box h3 { font-size:1.3rem; margin-bottom:8px; color:var(--green); }
+  .role-box p { color:var(--text-soft); font-size:0.9rem; margin-bottom:24px; }
+  .role-option { display:flex; align-items:center; gap:12px; width:100%; padding:14px; border-radius:10px; border:1.5px solid var(--border); margin-bottom:12px; font-weight:600; font-size:0.95rem; text-align:left; transition:all .2s; }
+  .role-icon { width:36px; height:36px; border-radius:8px; background:var(--sage); display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0; }
+  .role-box input[type="text"],.role-box input[type="password"],.role-box input[type="email"] { width:100%; padding:12px 14px; border-radius:9px; border:1.5px solid var(--border); font-size:0.95rem; margin-bottom:10px; font-family:inherit; }
+  .role-box .err { color:#b3261e; font-size:0.82rem; margin-bottom:10px; display:none; }
+  .role-box .back-link { font-size:0.85rem; color:var(--text-soft); margin-top:14px; display:inline-block; }
+  .btn-go { background:var(--green); color:white; width:100%; padding:13px; border-radius:9px; font-weight:600; font-size:0.95rem; }
+  .btn-go:hover { background:var(--green-dark); }
+  .btn-green { background:var(--green-light); color:white; }
+  .btn-green:hover { background:var(--green-dark); transform:translateY(-2px); }
+  .page-section { padding:70px 8%; }
+  .tag-pill { display:inline-block; background:var(--sage); color:var(--green); font-size:0.76rem; font-weight:700; letter-spacing:1.2px; text-transform:uppercase; padding:7px 16px; border-radius:30px; margin-bottom:18px; }
+  .pill-dot { width:6px; height:6px; border-radius:50%; background:var(--green); display:inline-block; margin-right:6px; }
+  .btn { display:inline-flex; align-items:center; gap:8px; padding:14px 26px; border-radius:9px; font-weight:700; font-size:0.95rem; transition:all .2s; letter-spacing:-0.01em; }
+  .btn-primary { background:var(--green); color:white; }
+  .btn-primary:hover { background:var(--green-dark); transform:translateY(-2px); }
+  .btn-secondary { background:white; color:var(--text); border:1.5px solid var(--border); }
+  .btn-secondary:hover { border-color:var(--green-light); background:var(--sage-2); }
+  .reveal { opacity:0; transform:translateY(24px); transition:all .6s ease; }
+  .reveal.visible { opacity:1; transform:translateY(0); }
+  .hero { padding:60px 8% 50px; }
+  .hero-grid { display:grid; grid-template-columns:1.1fr 1fr; gap:50px; align-items:center; max-width:1200px; margin:0 auto; }
+  @media (max-width:900px) { .hero-grid { grid-template-columns:1fr; gap:28px; } }
+  @media (max-width:700px) { .hero { padding:30px 5% 30px; } .hero h1 { font-size:1.9rem; } .hero p.lead { font-size:0.95rem; } .hero-ctas { gap:8px; } .hero-ctas .btn { padding:12px 18px; font-size:0.88rem; } }
+  .hero h1 { font-size:clamp(2.3rem,5vw,3.2rem); font-weight:800; line-height:1.12; margin-bottom:18px; color:var(--text); letter-spacing:-0.03em; }
+  .hero h1 .accent { color:var(--green); }
+  .badge-row { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:18px; }
+  .mini-badge { background:var(--sage-2); border:1px solid var(--border); font-size:0.78rem; padding:6px 12px; border-radius:30px; color:var(--text-soft); display:flex; align-items:center; gap:6px; }
+  .hero p.lead { color:var(--text-soft); font-size:1.02rem; margin-bottom:26px; max-width:520px; }
+  .hero-ctas { display:flex; gap:12px; flex-wrap:wrap; }
+  .hero-image { border-radius:18px; overflow:hidden; position:relative; aspect-ratio:16/11.5; background:linear-gradient(160deg,#2a4f43,#0f2a20); }
+  .hero-image img,.hero-image video { width:100%; height:100%; object-fit:cover; display:block; }
+
+  .hero-image-tag .small { font-size:0.7rem; letter-spacing:1px; text-transform:uppercase; opacity:0.8; margin-bottom:4px; }
+  .hero-image-tag .big { font-weight:700; font-size:1rem; }
+  .two-col { display:grid; grid-template-columns:1fr 1fr; gap:50px; max-width:1200px; margin:0 auto; align-items:start; }
+  @media (max-width:900px) { .two-col { grid-template-columns:1fr; gap:28px; } }
+  @media (max-width:700px) { .page-section { padding:40px 5%; } .two-col h2 { font-size:1.6rem; } }
+  .two-col h2 { font-size:2rem; font-weight:800; margin-bottom:16px; letter-spacing:-0.02em; }
+  .two-col p { color:var(--text-soft); margin-bottom:14px; font-size:1.02rem; }
+  .bullet-arrow { color:var(--text-soft); padding:6px 0; display:flex; gap:10px; align-items:flex-start; font-size:0.95rem; }
+  .bullet-arrow::before { content:'›'; color:var(--green); font-weight:800; }
+  .mini-cards-2x2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:18px; }
+  .mini-card { background:var(--sage-2); border:1px solid var(--border); border-radius:12px; padding:18px; }
+  .mini-card .ic { width:34px; height:34px; border-radius:8px; background:var(--sage); display:flex; align-items:center; justify-content:center; margin-bottom:10px; font-size:0.95rem; }
+  .mini-card h4 { font-size:0.92rem; font-weight:700; margin-bottom:2px; }
+  .mini-card span { font-size:0.78rem; color:var(--text-soft); }
+  .step-list { display:flex; flex-direction:column; gap:14px; }
+  .step-card { background:white; border:1px solid var(--border); border-radius:12px; padding:20px 22px; transition:all .25s; }
+  .step-card:hover { border-color:var(--green-light); box-shadow:0 8px 20px rgba(26,77,58,0.08); }
+  .step-num { font-size:1.6rem; font-weight:800; color:#d8e3dd; margin-bottom:4px; }
+  .step-card h4 { font-size:1.1rem; font-weight:700; margin-bottom:5px; letter-spacing:-0.01em; }
+  .step-card p { font-size:0.88rem; color:var(--text-soft); margin-bottom:6px; }
+  .step-card .link { font-size:0.85rem; color:var(--green); font-weight:600; }
+  .gain-box { background:var(--sage-2); border:1px solid var(--border); border-radius:12px; padding:20px 22px; margin-top:14px; }
+  .gain-box h4 { font-size:0.95rem; margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+  .gain-item { display:flex; gap:10px; align-items:flex-start; padding:6px 0; font-size:0.88rem; color:var(--text-soft); }
+  .gain-num { width:20px; height:20px; border-radius:50%; background:var(--green); color:white; font-size:0.7rem; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px; }
+  .three-col { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; max-width:1200px; margin:0 auto; }
+  @media (max-width:900px) { .three-col { grid-template-columns:1fr 1fr; } }
+  @media (max-width:600px) { .three-col { grid-template-columns:1fr; } }
+  .industry-card { border:1px solid var(--border); border-radius:14px; padding:22px; }
+  .industry-card .tag { font-size:0.74rem; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:var(--green); margin-bottom:14px; display:flex; align-items:center; }
+
+  .career-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; max-width:1200px; margin:0 auto; }
+  @media (max-width:900px) { .career-grid { grid-template-columns:1fr 1fr; } }
+  @media (max-width:600px) { .career-grid { grid-template-columns:1fr; } }
+  .career-card { border:1px solid var(--border); border-radius:14px; padding:22px; transition:all .25s; }
+  .career-card:hover { box-shadow:0 10px 26px rgba(26,77,58,0.1); transform:translateY(-4px); border-color:var(--green-light); }
+  .career-head { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+  .career-ic { width:40px; height:40px; border-radius:9px; background:var(--sage); display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0; }
+  .career-card h4 { font-size:1.1rem; font-weight:700; letter-spacing:-0.01em; }
+  .career-card p.desc { font-size:0.88rem; color:var(--text-soft); margin-bottom:12px; }
+  .career-meta { font-size:0.82rem; }
+  .career-meta strong { color:var(--text); }
+  .career-meta .tools-val { color:var(--text-soft); }
+  .career-meta .proj-val { color:var(--green-light); font-weight:600; }
+  .compare-table { width:100%; max-width:1000px; margin:0 auto; border-collapse:collapse; border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+  .compare-table th { background:var(--sage-2); text-align:left; padding:14px 18px; font-size:0.74rem; letter-spacing:1px; text-transform:uppercase; color:var(--text-soft); }
+  .compare-table th.t2r-col { color:var(--green); }
+  .compare-table td { padding:14px 18px; border-top:1px solid var(--border); font-size:0.9rem; }
+  .compare-table td.bad { color:#b3261e; }
+  .compare-table td.good { color:var(--green); font-weight:500; }
+  @media (max-width:600px) { .compare-table th,.compare-table td { padding:10px 10px; font-size:0.78rem; } }
+  .network-wrap { display:grid; grid-template-columns:1.4fr 1fr; gap:24px; max-width:1100px; margin:0 auto 36px; }
+  @media (max-width:900px) { .network-wrap { grid-template-columns:1fr; gap:18px; } }
+  .map-box { background:var(--sage-2); border:1px solid var(--border); border-radius:16px; min-height:340px; position:relative; overflow:hidden; }
+  @media (max-width:700px) {
+    #mapBox, #leafletMap { min-height:260px !important; }
+  }
+  .map-side { background:white; border:1px solid var(--border); border-radius:16px; padding:26px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; }
+  .map-side .globe-ic { font-size:2rem; margin-bottom:10px; }
+  .map-side p { font-size:0.85rem; color:var(--text-soft); margin-bottom:14px; }
+  .country-chips { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
+  .country-chip { background:var(--sage-2); border:1px solid var(--border); font-size:0.78rem; padding:5px 12px; border-radius:20px; color:var(--green); font-weight:600; cursor:pointer; transition:all .2s; }
+  .speaker-wall-stats-row { display:flex; gap:14px; flex-wrap:wrap; margin-top:18px; justify-content:center; }
+  .speaker-wall-stat-chip { background:var(--sage-2); border:1px solid var(--border); border-radius:12px; padding:14px 18px; min-width:90px; }
+  .speaker-wall-stat-chip .num { font-size:1.5rem; font-weight:800; color:var(--green); line-height:1.1; }
+  .speaker-wall-stat-chip .lbl { font-size:0.7rem; color:var(--text-soft); text-transform:uppercase; letter-spacing:1px; font-weight:700; }
+  .speaker-wall-photo-frame { max-width:1100px; margin:34px auto 0; border-radius:18px; overflow:hidden; border:1px solid var(--border); box-shadow:0 20px 46px rgba(26,77,58,0.12); background:var(--sage-2); }
+  .speaker-wall-photo-frame img { width:100%; height:auto; display:block; object-fit:contain; filter:grayscale(1) contrast(1.05) brightness(0.98); clip-path:inset(0 100% 0 0); opacity:0; transition:clip-path 1.5s cubic-bezier(.22,.61,.36,1), opacity .5s ease; }
+  .speaker-wall-photo-frame.visible img { clip-path:inset(0 0 0 0); opacity:1; }
+  @media (prefers-reduced-motion:reduce) { .speaker-wall-photo-frame img { transition:none; clip-path:inset(0 0 0 0); opacity:1; } }
+  @media (max-width:700px) { .speaker-wall-photo-frame { margin-top:24px; border-radius:14px; } }
+  .speaker-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:18px; max-width:1100px; margin:0 auto; }
+  @media (max-width:900px) { .speaker-grid { grid-template-columns:repeat(2,1fr); } }
+  @media (max-width:560px) { .speaker-grid { grid-template-columns:1fr; } }
+  .mini-speaker { border:1px solid var(--border); border-radius:12px; padding:16px; }
+  .mini-speaker-head { display:flex; gap:10px; align-items:center; margin-bottom:10px; }
+  .mini-avatar { width:42px; height:42px; border-radius:50%; background:var(--sage); color:var(--green); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.95rem; flex-shrink:0; }
+  .mini-speaker-head h5 { font-size:0.92rem; font-weight:700; }
+  .mini-speaker-head .loc { font-size:0.76rem; color:var(--text-soft); }
+  .mini-speaker .role { font-size:0.82rem; color:var(--green); font-weight:600; }
+  .mini-speaker .org { font-size:0.78rem; color:var(--text-soft); margin-bottom:6px; }
+  .mini-speaker .blurb { font-size:0.78rem; color:var(--text-soft); font-style:italic; }
+  .campus-filmstrip-wrap { max-width:1100px; margin:0 auto; overflow-x:auto; border-radius:16px; position:relative; -webkit-overflow-scrolling:touch; }
+  .campus-filmstrip-wrap::before,.campus-filmstrip-wrap::after { content:''; position:absolute; top:0; bottom:0; width:60px; z-index:2; pointer-events:none; }
+  .campus-filmstrip-wrap::before { left:0; background:linear-gradient(to right,white,transparent); }
+  .campus-filmstrip-wrap::after { right:0; background:linear-gradient(to left,white,transparent); }
+  .campus-filmstrip { display:flex; gap:16px; width:max-content; animation:campusScroll 40s linear infinite; }
+  @media (hover:hover) { .campus-filmstrip:hover { animation-play-state:paused; } }
+  .campus-filmstrip-item { flex-shrink:0; width:280px; height:190px; border-radius:14px; overflow:hidden; position:relative; background:var(--sage-2); box-shadow:0 4px 14px rgba(26,77,58,0.08); }
+  .campus-filmstrip-item img { width:100%; height:100%; object-fit:cover; display:block; transition:transform .4s; }
+  .campus-filmstrip-item:hover img { transform:scale(1.06); }
+  .campus-filmstrip-caption { position:absolute; bottom:0; left:0; right:0; background:linear-gradient(transparent,rgba(0,0,0,0.65)); color:white; font-size:0.74rem; padding:18px 12px 8px; }
+  @keyframes campusScroll { from { transform:translateX(0); } to { transform:translateX(-50%); } }
+  @media (max-width:700px) { .campus-filmstrip-item { width:220px; height:150px; } }
+  .builtfor-card { border:1px solid var(--border); border-radius:14px; padding:24px; margin-bottom:18px; }
+  .builtfor-head { display:flex; align-items:center; gap:10px; margin-bottom:14px; }
+  .builtfor-ic { width:36px; height:36px; border-radius:8px; background:var(--sage); display:flex; align-items:center; justify-content:center; font-size:1rem; }
+  .builtfor-card h4 { font-size:1.02rem; font-weight:700; }
+  .testimonial-card { border:1px solid var(--border); border-radius:14px; padding:22px; margin-bottom:16px; }
+  .testimonial-card .quote { font-size:0.92rem; font-style:italic; margin-bottom:12px; }
+  .testimonial-author { display:flex; align-items:center; gap:10px; }
+  .testimonial-card .auth-name { font-size:0.88rem; font-weight:700; }
+  .testimonial-card .auth-org { font-size:0.78rem; color:var(--text-soft); }
+  .cta-final { background:var(--green); color:white; padding:60px 8%; text-align:center; }
+  .cta-final h2 { font-size:2.2rem; margin-bottom:10px; font-weight:800; letter-spacing:-0.025em; }
+  .cta-final p { color:rgba(255,255,255,0.8); margin-bottom:26px; }
+  .cta-final .btn-secondary { background:rgba(255,255,255,0.1); border-color:rgba(255,255,255,0.3); color:white; }
+  .cta-final .btn-secondary:hover { background:rgba(255,255,255,0.18); }
+  footer { background:var(--green-dark); color:rgba(255,255,255,0.65); padding:50px 8% 26px; }
+  .footer-grid { display:grid; grid-template-columns:1.4fr 1fr 1fr; gap:40px; max-width:1100px; margin:0 auto 30px; }
+  @media (max-width:700px) { .footer-grid { grid-template-columns:1fr; gap:24px; } footer { padding:36px 6% 20px; } .footer-bottom { font-size:0.74rem; } }
+  .footer-logo { display:flex; align-items:center; gap:10px; color:white; font-weight:700; margin-bottom:12px; }
+  footer h5 { color:white; font-size:0.92rem; margin-bottom:12px; }
+  footer ul li { padding:5px 0; font-size:0.86rem; }
+  footer ul li a:hover { color:white; }
+  .footer-bottom { border-top:1px solid rgba(255,255,255,0.12); padding-top:20px; text-align:center; font-size:0.8rem; max-width:1100px; margin:0 auto; }
+  .section-head { text-align:center; max-width:680px; margin:0 auto 44px; }
+  .section-head h2 { font-size:clamp(1.9rem,4vw,2.6rem); font-weight:800; margin-bottom:12px; letter-spacing:-0.025em; }
+  .section-head p { color:var(--text-soft); font-size:1.05rem; }
+  .divider { border-top:1px solid var(--border); }
+  .video-sound-control { position:absolute; bottom:14px; right:14px; display:flex; align-items:center; gap:8px; background:rgba(15,29,20,0.55); backdrop-filter:blur(4px); border:1px solid rgba(255,255,255,0.25); border-radius:24px; padding:7px 12px 7px 7px; z-index:5; }
+  .video-sound-control button { width:28px; height:28px; border-radius:50%; background:transparent; border:none; color:white; font-size:1rem; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; transition:background .2s; }
+  .video-sound-control button:hover { background:rgba(255,255,255,0.15); }
+  .video-sound-control input[type="range"] { width:68px; height:4px; accent-color:white; cursor:pointer; }
+  @media (max-width:600px) { .video-sound-control input[type="range"] { width:48px; } }
+  .video-seek-row { position:absolute; left:14px; right:14px; bottom:58px; display:flex; align-items:center; gap:8px; z-index:5; }
+  .video-seek-row button { width:30px; height:30px; border-radius:50%; background:rgba(15,29,20,0.55); backdrop-filter:blur(4px); border:1px solid rgba(255,255,255,0.25); color:white; display:flex; align-items:center; justify-content:center; font-size:0.82rem; cursor:pointer; flex-shrink:0; transition:background .2s; }
+  .video-seek-row button:hover { background:rgba(15,29,20,0.75); }
+  .video-seek-row input[type="range"] { flex:1; height:4px; accent-color:white; cursor:pointer; }
+  .about-hero-video-wrap video { width:100%; height:100%; object-fit:cover; display:block; }
+  .video-seek-row .vc-time { color:white; font-size:0.68rem; flex-shrink:0; min-width:74px; text-align:right; text-shadow:0 1px 3px rgba(0,0,0,0.6); }
+  @media (max-width:600px) { .video-seek-row { bottom:54px; } .video-seek-row .vc-time { display:none; } }
+  .hero-image:fullscreen,.about-hero-video-wrap:fullscreen,.hero-image:-webkit-full-screen,.about-hero-video-wrap:-webkit-full-screen { background:black; }
+  :fullscreen video,:-webkit-full-screen video { width:100%; height:100%; object-fit:contain; }
+  @media (max-width:700px) {
+    .hero-image video,.about-hero-video-wrap video { object-fit:contain; background:#0c1f17; }
+  }
+  .about-hero-grid { max-width:1100px; margin:0 auto; display:grid; grid-template-columns:1.1fr 1fr; gap:50px; align-items:center; }
+  @media (max-width:900px) { .about-hero-grid { grid-template-columns:1fr; gap:28px; } }
+  .about-hero-video-wrap { border-radius:18px; overflow:hidden; position:relative; aspect-ratio:16/11.5; background:linear-gradient(160deg,#2a4f43,#0f2a20); }
+  .video-play-overlay { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(10,25,18,0.06); cursor:pointer; z-index:4; transition:opacity .25s; }
+  .video-play-overlay.hidden { display:none; }
+  .video-play-overlay .play-ic { width:62px; height:62px; border-radius:50%; background:rgba(255,255,255,0.55); backdrop-filter:blur(3px); display:flex; align-items:center; justify-content:center; font-size:1.5rem; color:var(--green); box-shadow:0 10px 26px rgba(0,0,0,0.2); padding-left:4px; }
+  .page-hidden { display:none; }
+  .branch-chip { padding:9px 16px; border-radius:8px; border:1.5px solid var(--border); font-size:0.86rem; font-weight:600; background:white; color:var(--text-soft); transition:all .2s; }
+  .branch-chip.active { background:var(--green); color:white; border-color:var(--green); }
+  .session-tab { padding:9px 16px; border-radius:8px; font-size:0.86rem; font-weight:600; color:var(--text-soft); background:var(--sage-2); transition:all .2s; }
+  .session-tab.active { background:var(--green); color:white; }
+  .session-card { border:1px solid var(--border); border-radius:14px; overflow:hidden; transition:all .25s; background:white; display:flex; flex-direction:column; height:100%; }
+  .session-card:hover { box-shadow:0 12px 28px rgba(26,77,58,0.1); transform:translateY(-4px); }
+  .session-thumb { aspect-ratio:16/9; position:relative; overflow:hidden; background:linear-gradient(135deg,#2a4f43,#0f2a20); }
+  .session-thumb img { width:100%; height:100%; object-fit:cover; }
+  .lightbox-trigger { cursor:zoom-in; }
+  .img-lightbox-overlay { position:fixed; inset:0; background:rgba(15,29,20,0.88); z-index:3000; display:none; align-items:center; justify-content:center; padding:30px; cursor:zoom-out; }
+  .img-lightbox-overlay.open { display:flex; }
+  .img-lightbox-content { max-width:92vw; max-height:88vh; display:flex; flex-direction:column; align-items:center; gap:14px; }
+  .img-lightbox-content img { max-width:100%; max-height:78vh; border-radius:12px; box-shadow:0 20px 60px rgba(0,0,0,0.45); cursor:default; display:block; }
+  .img-lightbox-caption { color:white; font-size:0.92rem; font-weight:600; text-align:center; max-width:700px; }
+  .img-lightbox-close { position:absolute; top:18px; right:22px; width:40px; height:40px; border-radius:50%; background:rgba(255,255,255,0.15); color:white; font-size:1.3rem; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:background .2s; }
+  .img-lightbox-close:hover { background:rgba(255,255,255,0.3); }
+  .session-badge-row { position:absolute; top:10px; left:10px; right:10px; display:flex; justify-content:space-between; }
+  .sbadge { font-size:0.7rem; font-weight:700; padding:4px 10px; border-radius:20px; }
+  .sbadge.completed { background:rgba(255,255,255,0.92); color:var(--green); }
+  .sbadge.upcoming { background:#e6a623; color:white; }
+  .sbadge.guest { background:rgba(15,29,20,0.65); color:white; backdrop-filter:blur(3px); }
+  .session-body { padding:18px; display:flex; flex-direction:column; flex:1; }
+  .session-body h4 { font-size:1rem; font-weight:700; margin-bottom:6px; line-height:1.3; }
+  .session-body .desc { font-size:0.82rem; color:var(--text-soft); margin-bottom:12px; }
+  .session-speaker { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+  .session-speaker-info h6 { font-size:0.84rem; font-weight:700; }
+  .session-speaker-info span { font-size:0.74rem; color:var(--text-soft); }
+  .session-meta-row { font-size:0.78rem; color:var(--text-soft); display:flex; gap:12px; flex-wrap:wrap; margin-bottom:12px; }
+  .session-footer { display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border); padding-top:12px; margin-top:auto; }
+  .session-branch-tag { font-size:0.74rem; font-weight:600; background:var(--sage); color:var(--green); padding:4px 10px; border-radius:20px; }
+  .session-action-link { font-size:0.82rem; font-weight:700; color:var(--green); background:none; border:none; cursor:pointer; }
+  .session-register-btn { font-size:0.82rem; font-weight:700; color:white; background:var(--green); padding:7px 14px; border-radius:7px; }
+  .session-register-btn:hover { background:var(--green-dark); }
+  #sessionDetailDialog { border:none; padding:0; border-radius:20px; max-width:680px; width:calc(100% - 40px); max-height:90vh; overflow-y:auto; box-shadow:0 30px 70px rgba(0,0,0,0.3); position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); margin:0; }
+  #sessionDetailDialog::backdrop { background:rgba(15,29,20,0.75); backdrop-filter:blur(4px); }
+  @media (max-width:900px) { #sessionGrid { grid-template-columns:repeat(2,1fr) !important; } }
+  @media (max-width:560px) { #sessionGrid { grid-template-columns:1fr !important; } }
+  @media (max-width:700px) { #sessionDetailDialog { width:calc(100% - 24px); max-height:95vh; top:50%; transform:translate(-50%,-50%); } }
+  .speaker-full-card { border:1px solid var(--border); border-radius:14px; padding:22px; background:white; transition:all .25s; }
+  .speaker-full-card:hover { box-shadow:0 12px 26px rgba(26,77,58,0.1); transform:translateY(-4px); border-color:var(--green-light); }
+  .speaker-full-head { display:flex; gap:12px; align-items:center; margin-bottom:14px; }
+  .speaker-full-avatar { width:48px; height:48px; border-radius:50%; background:var(--sage); color:var(--green); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:1rem; flex-shrink:0; }
+  .speaker-full-head h4 { font-size:1.02rem; font-weight:700; }
+  .speaker-full-head .loc { font-size:0.8rem; color:var(--text-soft); display:flex; align-items:center; gap:4px; }
+  .speaker-full-card .role { font-size:0.9rem; font-weight:600; color:var(--text); margin-bottom:2px; }
+  .speaker-full-card .org { font-size:0.84rem; color:var(--text-soft); margin-bottom:12px; }
+  .speaker-expertise-tag { display:inline-block; font-size:0.78rem; font-weight:700; color:var(--green); background:var(--sage); padding:5px 12px; border-radius:8px; }
+  .speaker-founder-tag { font-size:0.68rem; font-weight:700; color:white; background:var(--green); padding:3px 9px; border-radius:20px; margin-left:8px; vertical-align:middle; }
+  @media (max-width:900px) { #fullSpeakerGrid { grid-template-columns:repeat(2,1fr) !important; } }
+  @media (max-width:560px) { #fullSpeakerGrid { grid-template-columns:1fr !important; } }
+  .lib-card { border:1px solid var(--border); border-radius:12px; padding:18px; display:flex; gap:12px; background:white; transition:all .2s; }
+  .lib-card:hover { border-color:var(--green-light); box-shadow:0 8px 20px rgba(26,77,58,0.08); }
+  .lib-ic-box { width:38px; height:38px; border-radius:8px; background:var(--sage); display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:1rem; }
+  .lib-card h5 { font-size:0.94rem; font-weight:700; margin-bottom:5px; }
+  .lib-card .desc { font-size:0.82rem; color:var(--text-soft); margin-bottom:10px; }
+  .lib-tags { display:flex; gap:6px; flex-wrap:wrap; }
+  .lib-tag { font-size:0.7rem; font-weight:700; padding:3px 9px; border-radius:20px; }
+  .lib-tag.branch { background:var(--sage); color:var(--green); }
+  .lib-tag.type { background:#eef0f4; color:#4a5568; }
+  @media (max-width:700px) { #libGrid { grid-template-columns:1fr !important; } }
+  .admin-form-group { margin-bottom:16px; }
+  .admin-form-group label { display:block; font-size:0.85rem; font-weight:600; margin-bottom:6px; }
+  .admin-form-group input,.admin-form-group select,.admin-form-group textarea { width:100%; padding:11px 13px; border-radius:8px; border:1.5px solid var(--border); font-size:0.9rem; font-family:inherit; }
+  .admin-form-group textarea { resize:vertical; min-height:70px; }
+  .admin-form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+
+  .journey-timeline { max-width:800px; margin:0 auto; position:relative; padding:10px 0; }
+  .journey-line { position:absolute; left:50%; top:0; bottom:0; width:3px; background:linear-gradient(to bottom, var(--sage), var(--green-light), var(--sage)); transform:translateX(-50%); }
+  .journey-step { position:relative; width:46%; padding:24px 26px; background:white; border:1px solid var(--border); border-radius:14px; margin-bottom:50px; box-shadow:0 8px 24px rgba(26,77,58,0.07); transition: all .3s; }
+  .journey-step:hover { transform:translateY(-4px); box-shadow:0 14px 32px rgba(26,77,58,0.12); border-color:var(--green-light); }
+  .journey-step:nth-child(2) { margin-left:0; }
+  .journey-step:nth-child(3) { margin-left:54%; }
+  .journey-step:nth-child(4) { margin-left:0; }
+  .journey-num { position:absolute; top:-18px; width:42px; height:42px; border-radius:50%; background:var(--green); color:white; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:0.95rem; box-shadow:0 0 0 6px white; }
+  .journey-step:nth-child(2) .journey-num { right:-21px; }
+  .journey-step:nth-child(3) .journey-num { left:-21px; }
+  .journey-step:nth-child(4) .journey-num { right:-21px; }
+  .journey-icon { font-size:1.6rem; margin-bottom:10px; }
+  .journey-step h4 { font-size:1.1rem; font-weight:700; margin-bottom:8px; }
+  .journey-step p { font-size:0.88rem; color:var(--text-soft); }
+  @media (max-width:700px) {
+    .journey-line { left:20px; }
+    .journey-step { width:calc(100% - 50px) !important; margin-left:50px !important; margin-right:0 !important; }
+    .journey-num, .journey-step:nth-child(2) .journey-num, .journey-step:nth-child(3) .journey-num, .journey-step:nth-child(4) .journey-num { left:-50px !important; right:auto !important; }
+  }
+  @media (max-width:480px) {
+    .journey-step { padding:18px 16px; }
+    .journey-step h4 { font-size:1rem; }
+    .journey-step p { font-size:0.84rem; }
+  }
+  .feature-cards-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; max-width:1200px; margin:0 auto 50px; }
+  @media (max-width:900px) { .feature-cards-grid { grid-template-columns:repeat(2,1fr); } }
+  @media (max-width:500px) { .feature-cards-grid { grid-template-columns:1fr 1fr; gap:10px; } .feature-cards-grid h4 { font-size:0.88rem; } }
+  .how-it-works-grid { display:grid; grid-template-columns:1fr auto 1fr auto 1fr; align-items:start; gap:0; }
+  @media (max-width:900px) {
+    .how-it-works-grid { grid-template-columns:1fr; gap:14px; }
+    .how-it-works-grid .hiw-arrow { display:none; }
+  }
+  @media (max-width:700px) {
+    .about-hero-grid { grid-template-columns:1fr !important; }
+    .section-head h2 { font-size:1.6rem; }
+    .cta-final h2 { font-size:1.6rem; }
+    .cta-final { padding:44px 6%; }
+    .mini-cards-2x2 { grid-template-columns:1fr 1fr; }
+    #libGrid { grid-template-columns:1fr !important; }
+  }
+  .gain-tiles { display:grid; grid-template-columns:repeat(5,1fr); gap:12px; }
+  @media (max-width:900px) { .gain-inner { grid-template-columns:1fr !important; } .gain-tiles { grid-template-columns:repeat(5,1fr); } }
+  @media (max-width:600px) { .gain-tiles { grid-template-columns:repeat(3,1fr); } }
+  @media (max-width:560px) {
+    .info-grid { grid-template-columns:1fr; }
+    .mini-cards-2x2 { grid-template-columns:1fr; }
+    .gain-tiles { grid-template-columns:repeat(3,1fr); }
+  }
+  @media (max-width:700px) {
+    #branchFilterRow { gap:6px; }
+    .branch-chip { font-size:0.78rem; padding:7px 10px; }
+    .session-tab { font-size:0.82rem; padding:8px 12px; }
+  }
+  @media (max-width:560px) {
+    .speaker-wall-stats-row { gap:8px; }
+    .speaker-wall-stat-chip { padding:10px 12px; min-width:70px; }
+    .speaker-wall-stat-chip .num { font-size:1.2rem; }
+  }
+  @media (max-width:700px) {
+    #sessionDetailDialog { padding:0; border-radius:16px; }
+    #sessionDetailDialog .session-detail-body { padding:18px 16px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-left">
+    <div class="logo-badge" id="navLogoBadge"><img src="images/Logo/logo.jpg" alt="T2R Logo" id="navLogoImg"></div>
+    <div class="logo-text"><span class="t2r">T2R</span><span class="full">Theory to Reality</span></div>
+  </div>
+  <button class="nav-toggle" id="navToggle">☰</button>
+  <div class="nav-links" id="navLinks">
+    <a href="#home" data-page="home">Home</a>
+    <a href="#sessions" data-page="sessions">Sessions</a>
+    <a href="#speakers" data-page="speakers">Speakers</a>
+    <a href="#library" data-page="library">Library</a>
+    <a href="#about" data-page="about">About</a>
+  </div>
+  <div class="nav-right"></div>
+</nav>
+
+<div id="page-home">
+  <section class="hero">
+    <div class="hero-grid">
+      <div class="reveal">
+        <span class="tag-pill"><span class="pill-dot"></span>For Engineering Students Globally</span>
+        <h1>See What Your Engineering Career Actually Looks Like — <span class="accent">Before You Graduate</span></h1>
+        <div class="badge-row">
+          <span class="mini-badge">● Used by students across multiple colleges</span>
+          <span class="mini-badge">🌐 Speakers from across the globe</span>
+        </div>
+        <p class="lead">Go beyond theory. Learn through real-world projects, industry tools, and expert-led sessions that show you what engineers actually do.</p>
+        <div class="hero-ctas">
+          <a href="#sessions" class="btn btn-primary" onclick="navigateTo('sessions')">Explore Sessions →</a>
+          <a href="#partner" class="btn btn-secondary" onclick="navigateTo('partner')">For Colleges</a>
+        </div>
+      </div>
+      <div class="hero-image reveal" id="heroImageWrap">
+        <video id="heroVideo" playsinline poster="images/t2r-intro-poster.jpg">
+          <source src="Videos/intro.mp4" type="video/mp4">
+        </video>
+        <div class="video-play-overlay" id="heroPlayOverlay"><div class="play-ic">▶</div></div>
+        <div class="video-seek-row">
+          <button id="heroPlayPauseBtn" aria-label="Play or pause">▶</button>
+          <input type="range" id="heroSeekBar" min="0" max="100" value="0" aria-label="Seek video">
+          <span class="vc-time" id="heroTimeLabel">0:00 / 0:00</span>
+        </div>
+        <div class="video-sound-control">
+          <button id="heroSoundToggle" aria-label="Toggle video sound" type="button">🔊</button>
+          <input type="range" id="heroVolumeSlider" min="0" max="100" value="20" aria-label="Video volume">
+          <button id="heroFullscreenBtn" aria-label="Toggle fullscreen" type="button">⛶</button>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <section class="page-section">
+    <div class="section-head reveal">
+      <span class="tag-pill">What Is T2R</span>
+      <h2>From Theory to Reality</h2>
+      <p>Most students learn concepts — but never see how they are applied in real projects. T2R bridges this gap by connecting classroom learning with real-world engineering.</p>
+    </div>
+
+    <!-- 4 Feature Cards -->
+    <div class="feature-cards-grid reveal">
+      <div style="background:var(--sage-2); border:1px solid var(--border); border-radius:14px; padding:22px;">
+        <div style="width:40px; height:40px; border-radius:10px; background:var(--green); display:flex; align-items:center; justify-content:center; font-size:1.1rem; margin-bottom:14px;">🎥</div>
+        <h4 style="font-size:0.95rem; font-weight:700; margin-bottom:6px;">Expert-led Sessions</h4>
+        <p style="font-size:0.82rem; color:var(--text-soft); margin:0;">Live & recorded sessions from working engineers worldwide</p>
+      </div>
+      <div style="background:var(--sage-2); border:1px solid var(--border); border-radius:14px; padding:22px;">
+        <div style="width:40px; height:40px; border-radius:10px; background:var(--green); display:flex; align-items:center; justify-content:center; font-size:1.1rem; margin-bottom:14px;">📖</div>
+        <h4 style="font-size:0.95rem; font-weight:700; margin-bottom:6px;">6 Engineering Branches</h4>
+        <p style="font-size:0.82rem; color:var(--text-soft); margin:0;">Civil, Mechanical, Electrical, CS, Electronics & more</p>
+      </div>
+      <div style="background:var(--sage-2); border:1px solid var(--border); border-radius:14px; padding:22px;">
+                  <div style="width:40px; height:40px; border-radius:10px; background:var(--green); display:flex; align-items:center; justify-content:center; font-size:1.1rem; margin-bottom:14px;">🎯</div>
+        <h4 style="font-size:0.95rem; font-weight:700; margin-bottom:6px;">Know Your Path</h4>
+        <p style="font-size:0.82rem; color:var(--text-soft); margin:0;">Understand where your degree leads before you graduate</p>
+      </div>
+      <div style="background:var(--sage-2); border:1px solid var(--border); border-radius:14px; padding:22px;">
+        <div style="width:40px; height:40px; border-radius:10px; background:var(--green); display:flex; align-items:center; justify-content:center; font-size:1.1rem; margin-bottom:14px;">⚡</div>
+        <h4 style="font-size:0.95rem; font-weight:700; margin-bottom:6px;">Industry Tools</h4>
+        <p style="font-size:0.82rem; color:var(--text-soft); margin:0;">Real workflows used by professionals on actual projects</p>
+      </div>
+    </div>
+
+    <!-- How It Works — Horizontal Steps -->
+    <div style="max-width:1200px; margin:0 auto;" class="reveal" id="howItWorksGrid">
+      <div style="text-align:center; margin-bottom:32px;">
+        <span class="tag-pill">Process</span>
+        <h2 style="font-size:1.6rem; font-weight:800; margin-top:8px;">How It Works</h2>
+      </div>
+      <div class="how-it-works-grid">
+        <!-- Step 1 -->
+        <div style="background:white; border:1px solid var(--border); border-radius:16px; padding:28px 24px; text-align:center; position:relative;">
+          <div style="width:48px; height:48px; border-radius:50%; background:var(--green); color:white; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:1.1rem; margin:0 auto 16px;">1</div>
+          <h4 style="font-size:1rem; font-weight:700; margin-bottom:10px;">Choose Your Domain</h4>
+          <p style="font-size:0.85rem; color:var(--text-soft); margin-bottom:14px;">Pick from Mechanical, Civil, Electrical and more — aligned with your field of study.</p>
+          <div style="background:var(--sage-2); border-radius:8px; padding:10px 14px; font-size:0.8rem; color:var(--green); font-weight:600;">Start with what you already study</div>
+        </div>
+        <!-- Arrow -->
+        <div class="hiw-arrow" style="display:flex; align-items:center; padding:0 10px; margin-top:60px;">
+          <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><path d="M6 16h20M20 10l6 6-6 6" stroke="#1a4d3a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <!-- Step 2 -->
+        <div style="background:var(--green); border-radius:16px; padding:28px 24px; text-align:center;">
+          <div style="width:48px; height:48px; border-radius:50%; background:rgba(255,255,255,0.2); color:white; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:1.1rem; margin:0 auto 16px;">2</div>
+          <h4 style="font-size:1rem; font-weight:700; margin-bottom:10px; color:white;">Learn Through Real Projects</h4>
+          <p style="font-size:0.85rem; color:rgba(255,255,255,0.82); margin-bottom:14px;">See how core subjects are applied in actual industry projects — hydropower, bridges, smart grids & more.</p>
+          <div style="background:rgba(255,255,255,0.15); border-radius:8px; padding:10px 14px; font-size:0.8rem; color:white; font-weight:600;">Theory comes alive in real infrastructure</div>
+        </div>
+        <!-- Arrow -->
+        <div class="hiw-arrow" style="display:flex; align-items:center; padding:0 10px; margin-top:60px;">
+          <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><path d="M6 16h20M20 10l6 6-6 6" stroke="#1a4d3a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <!-- Step 3 -->
+        <div style="background:white; border:1px solid var(--border); border-radius:16px; padding:28px 24px; text-align:center;">
+          <div style="width:48px; height:48px; border-radius:50%; background:var(--green); color:white; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:1.1rem; margin:0 auto 16px;">3</div>
+          <h4 style="font-size:1rem; font-weight:700; margin-bottom:10px;">Discover Tools & Careers</h4>
+          <p style="font-size:0.85rem; color:var(--text-soft); margin-bottom:14px;">Explore the tools, skills, and career paths used by professionals — know exactly where you're headed.</p>
+          <div style="background:var(--sage-2); border-radius:8px; padding:10px 14px; font-size:0.8rem; color:var(--green); font-weight:600;">Know exactly where your skills lead</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- What You Gain -->
+    <div style="max-width:1200px; margin:28px auto 0; background:var(--sage-2); border:1px solid var(--border); border-radius:16px; padding:28px 36px;" class="reveal">
+              <div style="display:grid; grid-template-columns:auto 1fr; gap:32px; align-items:center;" class="gain-inner">
+        <div>
+          <h4 style="font-size:1rem; font-weight:700; margin-bottom:6px; color:var(--green);">🎓 What You Gain</h4>
+          <p style="font-size:0.82rem; color:var(--text-soft); max-width:200px; margin:0;">Everything you need to graduate with confidence</p>
+        </div>
+        <div class="gain-tiles">
+          <div style="background:white; border-radius:10px; padding:14px 12px; text-align:center; border:1px solid var(--border);">
+            <div style="font-size:1.2rem; margin-bottom:6px;">🗺️</div>
+            <div style="font-size:0.78rem; font-weight:600; color:var(--text);">Direction</div>
+          </div>
+          <div style="background:white; border-radius:10px; padding:14px 12px; text-align:center; border:1px solid var(--border);">
+            <div style="font-size:1.2rem; margin-bottom:6px;">🏗️</div>
+            <div style="font-size:0.78rem; font-weight:600; color:var(--text);">Real Projects</div>
+          </div>
+          <div style="background:white; border-radius:10px; padding:14px 12px; text-align:center; border:1px solid var(--border);">
+            <div style="font-size:1.2rem; margin-bottom:6px;">🛠️</div>
+            <div style="font-size:0.78rem; font-weight:600; color:var(--text);">Industry Tools</div>
+          </div>
+          <div style="background:white; border-radius:10px; padding:14px 12px; text-align:center; border:1px solid var(--border);">
+            <div style="font-size:1.2rem; margin-bottom:6px;">💡</div>
+            <div style="font-size:0.78rem; font-weight:600; color:var(--text);">Specialisation</div>
+          </div>
+          <div style="background:white; border-radius:10px; padding:14px 12px; text-align:center; border:1px solid var(--border);">
+            <div style="font-size:1.2rem; margin-bottom:6px;">🌐</div>
+            <div style="font-size:0.78rem; font-weight:600; color:var(--text);">Global Mentors</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="page-section" style="padding-top:20px;">
+    <div class="section-head reveal">
+      <span class="tag-pill">Who It's For</span>
+      <h2>Built For Students & Colleges</h2>
+      <p>Whether you're charting your own career path or shaping your institution's curriculum, T2R is designed around what you actually need.</p>
+    </div>
+    <div style="max-width:1100px; margin:0 auto; display:grid; grid-template-columns:1fr 1fr; gap:24px;">
+      <div class="builtfor-card reveal" style="margin-bottom:0;">
+        <div class="builtfor-head"><div class="builtfor-ic">🎓</div><h4>Students</h4></div>
+        <div class="bullet-arrow">Clarity on career path before graduation</div>
+        <div class="bullet-arrow">Real project exposure from industry</div>
+        <div class="bullet-arrow">Understanding of professional tools</div>
+        <div class="bullet-arrow">Confidence in specialization choice</div>
+      </div>
+      <div class="builtfor-card reveal" style="margin-bottom:0;">
+        <div class="builtfor-head"><div class="builtfor-ic">🏛️</div><h4>Colleges</h4></div>
+        <div class="bullet-arrow">Industry-linked learning for students</div>
+        <div class="bullet-arrow">Improved career readiness & placement</div>
+        <div class="bullet-arrow">Global speaker exposure</div>
+        <div class="bullet-arrow">Better graduate outcomes</div>
+      </div>
+    </div>
+  </section>
+
+
+
+  <section class="page-section">
+    <div class="section-head reveal">
+      <span class="tag-pill">Why T2R</span>
+      <h2>Bridging the Gap Between Classroom & Career</h2>
+      <p>Universities lay the foundation. T2R builds the bridge — connecting what students learn with how it's applied in the real world.</p>
+    </div>
+    <div style="max-width:1000px; margin:0 auto;" class="reveal">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-bottom:28px;">
+        <div style="background:var(--sage-2); border:1px solid var(--border); border-radius:16px; padding:28px;">
+          <div style="display:flex; align-items:center; gap:10px; margin-bottom:18px;">
+            <div style="width:38px; height:38px; border-radius:9px; background:var(--sage); display:flex; align-items:center; justify-content:center; font-size:1.1rem;">🏛️</div>
+            <h3 style="font-size:1.05rem; font-weight:700;">University Education</h3>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            <div style="display:flex; align-items:center; gap:10px; font-size:0.9rem; color:var(--text-soft);"><span style="color:var(--green); font-weight:700;">✓</span> Strong theoretical foundation</div>
+            <div style="display:flex; align-items:center; gap:10px; font-size:0.9rem; color:var(--text-soft);"><span style="color:var(--green); font-weight:700;">✓</span> Structured academic curriculum</div>
+            <div style="display:flex; align-items:center; gap:10px; font-size:0.9rem; color:var(--text-soft);"><span style="color:var(--green); font-weight:700;">✓</span> Core engineering principles</div>
+            <div style="display:flex; align-items:center; gap:10px; font-size:0.9rem; color:var(--text-soft);"><span style="color:var(--green); font-weight:700;">✓</span> Lab-based experiments</div>
+            <div style="display:flex; align-items:center; gap:10px; font-size:0.9rem; color:var(--text-soft);"><span style="color:var(--green); font-weight:700;">✓</span> Faculty mentorship</div>
+          </div>
+        </div>
+        <div style="background:var(--green); border-radius:16px; padding:28px;">
+          <div style="display:flex; align-items:center; gap:10px; margin-bottom:18px;">
+            <div style="width:38px; height:38px; border-radius:9px; background:rgba(255,255,255,0.15); display:flex; align-items:center; justify-content:center; font-size:1.1rem;">🚀</div>
+            <h3 style="font-size:1.05rem; font-weight:700; color:white;">T2R Adds On Top</h3>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            <div style="display:flex; align-items:center; gap:10px; font-size:0.9rem; color:rgba(255,255,255,0.88);"><span style="color:#e6a623; font-weight:700;">+</span> Real-world project exposure</div>
+            <div style="display:flex; align-items:center; gap:10px; font-size:0.9rem; color:rgba(255,255,255,0.88);"><span style="color:#e6a623; font-weight:700;">+</span> Industry tools & workflows</div>
+            <div style="display:flex; align-items:center; gap:10px; font-size:0.9rem; color:rgba(255,255,255,0.88);"><span style="color:#e6a623; font-weight:700;">+</span> Career clarity before graduation</div>
+            <div style="display:flex; align-items:center; gap:10px; font-size:0.9rem; color:rgba(255,255,255,0.88);"><span style="color:#e6a623; font-weight:700;">+</span> Global working engineers as speakers</div>
+            <div style="display:flex; align-items:center; gap:10px; font-size:0.9rem; color:rgba(255,255,255,0.88);"><span style="color:#e6a623; font-weight:700;">+</span> Confidence to enter the workforce</div>
+          </div>
+        </div>
+      </div>
+      <div style="background:var(--sage-2); border:1px solid var(--border); border-radius:14px; padding:22px 28px; text-align:center;">
+        <p style="font-size:1rem; font-weight:600; color:var(--green); margin-bottom:6px;">🤝 T2R works <em>with</em> universities — not instead of them</p>
+        <p style="font-size:0.9rem; color:var(--text-soft); margin:0;">We complement your curriculum by showing students exactly how their classroom knowledge applies in the real world — making your graduates more confident, career-ready, and placement-successful.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section class="page-section">
+    <div class="section-head reveal">
+      <span class="tag-pill">Career Direction</span>
+      <h2>Explore Engineering Career Paths</h2>
+      <p>Understand what different engineering roles actually do — the tools they use, projects they deliver, and how you can get there.</p>
+    </div>
+    <div class="career-grid reveal">
+      <div class="career-card"><div class="career-head"><div class="career-ic">💧</div><h4>Hydraulic Engineer</h4></div><p class="desc">Design water infrastructure, dams, and hydropower systems</p><div class="career-meta"><strong>Tools:</strong> <span class="tools-val">HEC-RAS, MATLAB, AutoCAD</span></div><div class="career-meta"><strong>Projects:</strong> <span class="proj-val">Pumped storage plants, irrigation channels, flood modelling</span></div></div>
+      <div class="career-card"><div class="career-head"><div class="career-ic">🏗️</div><h4>Structural Engineer</h4></div><p class="desc">Analyse and design buildings, bridges, and foundations</p><div class="career-meta"><strong>Tools:</strong> <span class="tools-val">ETABS, SAP2000, AutoCAD</span></div><div class="career-meta"><strong>Projects:</strong> <span class="proj-val">Bridge design, high-rise structures, seismic analysis</span></div></div>
+      <div class="career-card"><div class="career-head"><div class="career-ic">⚡</div><h4>Power Systems Engineer</h4></div><p class="desc">Plan and optimise electrical grids and renewable energy systems</p><div class="career-meta"><strong>Tools:</strong> <span class="tools-val">MATLAB, PSS/E, ETAP</span></div><div class="career-meta"><strong>Projects:</strong> <span class="proj-val">Solar-wind hybrid grids, power plant protection, smart grids</span></div></div>
+      <div class="career-card"><div class="career-head"><div class="career-ic">⚙️</div><h4>Embedded Systems Engineer</h4></div><p class="desc">Develop firmware and real-time control systems for hardware</p><div class="career-meta"><strong>Tools:</strong> <span class="tools-val">C/C++, Python, Simulink</span></div><div class="career-meta"><strong>Projects:</strong> <span class="proj-val">IoT devices, industrial robots, automation controllers</span></div></div>
+      <div class="career-card"><div class="career-head"><div class="career-ic">🌱</div><h4>Environmental Engineer</h4></div><p class="desc">Assess environmental impacts and design sustainable solutions</p><div class="career-meta"><strong>Tools:</strong> <span class="tools-val">GIS, Remote Sensing, Python</span></div><div class="career-meta"><strong>Projects:</strong> <span class="proj-val">Carbon footprint studies, satellite land-use analysis</span></div></div>
+      <div class="career-card"><div class="career-head"><div class="career-ic">🪨</div><h4>Geotechnical Engineer</h4></div><p class="desc">Study soil and rock mechanics for foundations and tunnels</p><div class="career-meta"><strong>Tools:</strong> <span class="tools-val">PLAXIS, SLOPE/W, AutoCAD</span></div><div class="career-meta"><strong>Projects:</strong> <span class="proj-val">Metro tunnelling, slope stability, foundation design</span></div></div>
+    </div>
+    <div style="text-align:center; margin-top:30px;"><a href="#sessions" class="btn btn-primary" onclick="navigateTo('sessions')">Explore Sessions for These Careers →</a></div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section class="page-section">
+    <div style="display:flex; justify-content:space-between; align-items:flex-end; max-width:1100px; margin:0 auto 30px; flex-wrap:wrap; gap:14px;">
+      <div class="reveal">
+        <span class="tag-pill">T2R in Classrooms</span>
+        <h2 style="font-size:1.7rem; font-weight:800; margin-bottom:8px;">Campus Experiences</h2>
+        <p style="color:var(--text-soft); max-width:480px;">Students attend live and streamed sessions, interacting with speakers from around the world and gaining real-world insights.</p>
+      </div>
+      <a href="#sessions" class="btn btn-secondary" onclick="navigateTo('sessions')">Explore Campus Sessions →</a>
+    </div>
+    <div class="campus-filmstrip-wrap reveal"><div class="campus-filmstrip" id="campusFilmstrip"></div></div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section class="page-section">
+    <div class="section-head reveal">
+      <span class="tag-pill">Testimonials</span>
+      <h2>What Students Say</h2>
+      <p style="color:var(--text-soft);">Curated from guest lecture feedback forms — Satya Institute of Technology and Management (SITAM)</p>
+    </div>
+    <div style="max-width:900px; margin:0 auto; display:grid; grid-template-columns:repeat(2,1fr); gap:20px;">
+      <div class="testimonial-card reveal"><p class="quote">"The lecture clearly showed how theoretical concepts are applied in real-world situations. It truly helped bridge the gap between knowledge and practice."</p><div class="testimonial-author"><div class="mini-avatar">S</div><div><div class="auth-name">Engineering Student</div><div class="auth-org">SITAM</div></div></div></div>
+      <div class="testimonial-card reveal"><p class="quote">"The most valuable part was learning how to apply theory to real-world applications."</p><div class="testimonial-author"><div class="mini-avatar">S</div><div><div class="auth-name">Engineering Student</div><div class="auth-org">SITAM</div></div></div></div>
+      <div class="testimonial-card reveal"><p class="quote">"The turbine diameter calculation logic and the explanation of different turbine types were excellent. Please conduct more sessions like this. Thank you!"</p><div class="testimonial-author"><div class="mini-avatar">S</div><div><div class="auth-name">Engineering Student</div><div class="auth-org">SITAM</div></div></div></div>
+      <div class="testimonial-card reveal"><p class="quote">"The session improved my understanding of applying theory to real-world challenges and will help in my professional growth."</p><div class="testimonial-author"><div class="mini-avatar">S</div><div><div class="auth-name">Engineering Student</div><div class="auth-org">SITAM</div></div></div></div>
+      <div class="testimonial-card reveal"><p class="quote">"Theory to Reality is very useful in bridging the gap between theory and practical knowledge."</p><div class="testimonial-author"><div class="mini-avatar">S</div><div><div class="auth-name">Engineering Student</div><div class="auth-org">SITAM</div></div></div></div>
+      <div class="testimonial-card reveal"><p class="quote">"The knowledge shared in this session will definitely help me during field work."</p><div class="testimonial-author"><div class="mini-avatar">S</div><div><div class="auth-name">Engineering Student</div><div class="auth-org">SITAM</div></div></div></div>
+    </div>
+    <div class="testimonial-card reveal" style="max-width:900px; margin:16px auto 0; text-align:center; background:var(--sage-2);"><h4 style="margin-bottom:8px;">Industry-Ready Before Day One</h4><p style="font-size:0.85rem; color:var(--text-soft); font-style:normal;">Students who attend T2R sessions enter their careers with clarity, context, and confidence that their peers lack.</p></div>
+  </section>
+
+  <section class="cta-final reveal">
+    <h2>Start Your Journey Today</h2>
+    <p>Stop guessing your future. Start understanding it.</p>
+    <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
+      <a href="#sessions" class="btn btn-secondary" style="background:white; color:var(--green);" onclick="navigateTo('sessions')">Explore Sessions →</a>
+      <a href="#partner" class="btn btn-secondary" onclick="navigateTo('partner')">Partner With Us</a>
+      <a href="#speakerapply" class="btn btn-secondary" onclick="navigateTo('speakerapply')">Become a Speaker</a>
+    </div>
+  </section>
+</div>
+
+<div id="page-sessions" class="page-hidden">
+  <section class="page-section" style="padding-top:40px;">
+    <div style="max-width:1100px; margin:0 auto 28px;"><h2 style="font-size:1.7rem; font-weight:800; margin-bottom:6px;">Sessions</h2><p style="color:var(--text-soft);">Register for upcoming sessions or revisit past ones with recordings.</p></div>
+    <div style="max-width:1100px; margin:0 auto 18px;"><input type="text" id="sessionSearch" placeholder="Search sessions or speakers..." style="width:100%; padding:13px 16px; border-radius:10px; border:1.5px solid var(--border); font-size:0.92rem; font-family:inherit;"></div>
+    <div style="max-width:1100px; margin:0 auto 18px; display:flex; gap:8px; flex-wrap:wrap;" id="branchFilterRow"></div>
+    <div style="max-width:1100px; margin:0 auto 26px; display:flex; gap:8px;"><button class="session-tab active" data-tab="all" id="tabAll">All (<span id="countAll">0</span>)</button><button class="session-tab" data-tab="upcoming" id="tabUpcoming">Upcoming (<span id="countUpcoming">0</span>)</button><button class="session-tab" data-tab="past" id="tabPast">Past & Recordings (<span id="countPast">0</span>)</button></div>
+    <div id="sessionGrid" style="max-width:1100px; margin:0 auto; display:grid; grid-template-columns:repeat(3,1fr); gap:22px;"></div>
+    <div id="sessionEmptyState" style="display:none; max-width:1100px; margin:0 auto; text-align:center; padding:60px 0; color:var(--text-soft);">No sessions match your search.</div>
+    <div style="max-width:1100px; margin:30px auto 0; text-align:center;"><button id="sessionsViewAllBtn" class="btn btn-secondary" style="display:none;">View All Sessions</button></div>
+  </section>
+</div>
+
+<div id="sessionModalOverlay" class="role-overlay" style="display:none;"><div class="role-box" style="max-width:440px; text-align:left;" id="sessionModalContent"></div></div>
+
+<dialog id="sessionDetailDialog">
+  <div id="sessionDetailBox"></div>
+</dialog>
+
+<div class="img-lightbox-overlay" id="imgLightboxOverlay">
+  <div class="img-lightbox-close" id="imgLightboxClose">✕</div>
+  <div class="img-lightbox-content" id="imgLightboxContent">
+    <img src="" alt="" id="imgLightboxImg">
+    <div class="img-lightbox-caption" id="imgLightboxCaption"></div>
+  </div>
+</div>
+
+<div id="page-speakers" class="page-hidden">
+  <section class="page-section" style="padding-bottom:50px; text-align:center;">
+    <span class="tag-pill"><span class="pill-dot"></span>The Network Behind T2R</span>
+    <h2 style="font-size:2rem; font-weight:800; margin:12px 0 14px; letter-spacing:-0.02em;">30+ Engineers. 7+ Countries. One Mission.</h2>
+    <p style="color:var(--text-soft); font-size:1.02rem; margin:0 auto 8px; max-width:620px;">Professionals from across the globe, bringing real-world knowledge and industry experience directly into the classroom.</p>
+    <p style="color:var(--green); font-weight:600; font-size:0.92rem; margin-bottom:24px;">Speakers from 7+ countries working on real engineering projects</p>
+    <a href="#speakerapply" class="btn btn-green" onclick="navigateTo('speakerapply')" style="font-size:0.88rem; padding:12px 22px; margin-top:0px;">🎙️ Become a Speaker</a>
+
+    <div class="speaker-wall-photo-frame reveal" id="speakerWallPhotoFrame">
+      <img src="images/speakers/speakerss.jpg" alt="T2R speakers and founders from around the world">
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section class="page-section" style="padding-top:50px; padding-bottom:30px;">
+    <div class="section-head reveal">
+      <span class="tag-pill">Global Network</span>
+      <h2 style="font-size:1.7rem; font-weight:800; margin-bottom:8px;">Explore by Country</h2>
+      <p style="color:var(--text-soft);">Click a pin on the map or a country chip below to filter speakers by location.</p>
+    </div>
+    <div style="max-width:880px; margin:0 auto 26px;" class="reveal">
+      <div class="map-box" id="mapBox" style="min-height:380px;">
+        <div id="leafletMap" style="width:100%; height:100%; min-height:380px; border-radius:16px;"></div>
+      </div>
+    </div>
+    <div style="max-width:1100px; margin:0 auto; display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap;">
+      <span id="mapSideTitle" style="font-weight:700; color:var(--green); display:none;"></span>
+      <span id="mapSideSub" style="font-size:0.85rem; color:var(--text-soft);"></span>
+      <div class="country-chips" id="countryChipsContainer"></div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section class="page-section">
+    <div style="max-width:1100px; margin:0 auto 18px;"><input type="text" id="speakerSearch" placeholder="Search speakers by name, organization, or expertise..." style="width:100%; padding:13px 16px; border-radius:10px; border:1.5px solid var(--border); font-size:0.92rem; font-family:inherit;"></div>
+    <div style="max-width:1100px; margin:0 auto 24px; display:flex; gap:12px; flex-wrap:wrap;">
+      <select id="speakerExpertiseFilter" style="padding:12px 16px; border-radius:10px; border:1.5px solid var(--border); font-size:0.88rem; font-family:inherit; flex:1; min-width:200px;"><option value="All">All Expertise Areas</option></select>
+      <select id="speakerCountryFilter" style="padding:12px 16px; border-radius:10px; border:1.5px solid var(--border); font-size:0.88rem; font-family:inherit; flex:1; min-width:160px;"><option value="All">All Countries</option></select>
+      <button id="speakerClearFilters" class="btn btn-secondary" style="font-size:0.85rem; padding:11px 18px;">Clear Filters</button>
+    </div>
+    <div style="max-width:1100px; margin:0 auto 14px; display:flex; justify-content:space-between; align-items:baseline;">
+      <span style="font-size:0.78rem; letter-spacing:1px; text-transform:uppercase; color:var(--text-soft); font-weight:700;" id="speakerGridLabel">All Speakers</span>
+    </div>
+    <div id="fullSpeakerGrid" style="max-width:1100px; margin:0 auto; display:grid; grid-template-columns:repeat(3,1fr); gap:22px;"></div>
+    <div id="speakerEmptyState" style="display:none; max-width:1100px; margin:0 auto; text-align:center; padding:60px 0; color:var(--text-soft);">No speakers match your search.</div>
+    <div style="max-width:1100px; margin:30px auto 0; text-align:center;"><button id="speakersViewAllBtn" class="btn btn-secondary" style="display:none;">View All Speakers</button></div>
+  </section>
+</div>
+
+<div id="page-library" class="page-hidden">
+  <section class="page-section" style="padding-top:40px;">
+    <div style="max-width:1000px; margin:0 auto 28px;"><h2 style="font-size:1.7rem; font-weight:800; margin-bottom:6px;">Resource Library</h2><p style="color:var(--text-soft);">Curated PDFs, session recordings, articles, and tools — filtered by branch and type.</p></div>
+    <div style="max-width:1000px; margin:0 auto 24px; display:flex; gap:12px; flex-wrap:wrap;">
+      <input type="text" id="libSearch" placeholder="Search resources..." style="flex:1; min-width:200px; padding:13px 16px; border-radius:10px; border:1.5px solid var(--border); font-size:0.92rem; font-family:inherit;">
+      <select id="libBranchFilter" style="padding:13px 16px; border-radius:10px; border:1.5px solid var(--border); font-size:0.9rem; font-family:inherit;"><option value="All">All Branches</option><option>Mechanical</option><option>Electrical</option><option>Computer Science</option><option>Civil</option><option>Electronics</option><option>General</option></select>
+      <select id="libTypeFilter" style="padding:13px 16px; border-radius:10px; border:1.5px solid var(--border); font-size:0.9rem; font-family:inherit;"><option value="All">All Types</option><option>PDF</option><option>Recording</option><option>Article</option><option>Tutorial</option></select>
+    </div>
+    <div id="libGrid" style="max-width:1000px; margin:0 auto; display:grid; grid-template-columns:1fr 1fr; gap:18px;"></div>
+    <div id="libEmptyState" style="display:none; max-width:1000px; margin:0 auto; text-align:center; padding:60px 0; color:var(--text-soft);">No resources match your search.</div>
+    <div style="max-width:1000px; margin:30px auto 0; text-align:center;"><button id="libraryViewAllBtn" class="btn btn-secondary" style="display:none;">View All Resources</button></div>
+  </section>
+</div>
+
+<div id="page-about" class="page-hidden">
+  <section class="page-section" style="padding-top:50px; padding-bottom:30px;">
+    <div class="about-hero-grid">
+      <div class="reveal">
+        <span class="tag-pill"><span class="pill-dot"></span>About the Platform</span>
+        <h2 style="font-size:2.3rem; font-weight:800; margin-bottom:16px; line-height:1.15;">Theory to Reality</h2>
+        <p style="color:var(--text-soft); font-size:1.05rem;">T2R is an initiative designed to bridge the gap between academic learning and real-world engineering practice — helping students understand how theory becomes impact.</p>
+      </div>
+      <div class="reveal about-hero-video-wrap" id="aboutVideoWrap">
+        <video id="aboutVideo" playsinline poster="images/t2r-about-poster.jpg">
+          <source src="Videos/about.mp4" type="video/mp4">
+        </video>
+        <div class="video-play-overlay" id="aboutPlayOverlay"><div class="play-ic">▶</div></div>
+        <div class="video-seek-row">
+          <button id="aboutPlayPauseBtn" aria-label="Play or pause">▶</button>
+          <input type="range" id="aboutSeekBar" min="0" max="100" value="0" aria-label="Seek video">
+          <span class="vc-time" id="aboutTimeLabel">0:00 / 0:00</span>
+        </div>
+        <div class="video-sound-control">
+          <button id="aboutSoundToggle" aria-label="Toggle video sound" type="button">🔊</button>
+          <input type="range" id="aboutVolumeSlider" min="0" max="100" value="20" aria-label="Video volume">
+          <button id="aboutFullscreenBtn" aria-label="Toggle fullscreen" type="button">⛶</button>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section class="page-section">
+    <div class="two-col">
+      <div class="reveal">
+        <h2>What is T2R?</h2>
+        <p>T2R (Theory to Reality) is a structured learning platform built by working engineers and researchers who have walked the same path — from classrooms to real engineering projects across the world.</p>
+        <p>We host expert-led sessions, curated resources, and mentorship opportunities that help engineering students go beyond textbooks and gain the knowledge they need for industry-ready careers.</p>
+        <div class="bullet-arrow">Understand how theoretical concepts apply in real projects</div>
+        <div class="bullet-arrow">Learn industry tools and professional workflows</div>
+        <div class="bullet-arrow">Explore career paths across engineering disciplines</div>
+        <div class="bullet-arrow">Connect with experienced engineers and researchers</div>
+      </div>
+      <div class="reveal">
+        <div class="mini-cards-2x2">
+          <div class="mini-card" style="text-align:center;"><h4 style="color:var(--green); font-size:1.05rem;">Live & Recorded</h4><span>Expert Sessions</span></div>
+          <div class="mini-card" style="text-align:center;"><h4 style="color:var(--green); font-size:1.05rem;">6 Branches</h4><span>Disciplines</span></div>
+          <div class="mini-card" style="text-align:center;"><h4 style="color:var(--green); font-size:1.05rem;">7–8+ Years</h4><span>Experience</span></div>
+          <div class="mini-card" style="text-align:center;"><h4 style="color:var(--green); font-size:1.05rem;">Industry-Ready</h4><span>Mission</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section class="page-section" style="background:var(--sage-2);">
+    <div class="two-col">
+      <div class="reveal" style="background:white; border-radius:14px; padding:28px;"><div class="builtfor-ic" style="margin-bottom:14px;">👁️</div><h3 style="font-size:1.1rem; font-weight:700; margin-bottom:10px;">Our Vision</h3><p style="color:var(--text-soft); font-size:0.92rem;">To create a platform where every engineering student understands how theory translates into real-world impact — and is equipped to shape the infrastructure and technology of tomorrow.</p></div>
+      <div class="reveal" style="background:white; border-radius:14px; padding:28px;"><div class="builtfor-ic" style="margin-bottom:14px;">🎯</div><h3 style="font-size:1.1rem; font-weight:700; margin-bottom:10px;">Our Mission</h3><div class="gain-item"><span class="gain-num">1</span>Bridge the gap between academia and industry practice</div><div class="gain-item"><span class="gain-num">2</span>Provide real project insights from experienced engineers</div><div class="gain-item"><span class="gain-num">3</span>Guide students toward meaningful and rewarding careers</div><div class="gain-item"><span class="gain-num">4</span>Build a global engineering learning ecosystem</div></div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section class="page-section">
+    <div class="section-head reveal"><span class="tag-pill">The Team</span><h2>Meet the Founders</h2><p>Engineers and researchers from world-class institutions, united by the mission to make engineering education more practical and impactful.</p></div>
+    <div class="career-grid reveal" id="foundersGrid"></div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section class="page-section" style="background:var(--sage-2);">
+    <div class="section-head reveal"><span class="tag-pill">Our Journey</span><h2>How T2R Started</h2></div>
+    <div class="journey-timeline">
+      <div class="journey-line"></div>
+      <div class="journey-step reveal">
+        <div class="journey-num">01</div>
+        <div class="journey-icon">💡</div>
+        <h4>The Idea</h4>
+        <p>Three engineers from KIT & IIT Bombay realized students graduate without ever seeing how their subjects apply to real projects.</p>
+      </div>
+      <div class="journey-step reveal">
+        <div class="journey-num">02</div>
+        <div class="journey-icon">🚀</div>
+        <h4>T2R Launches</h4>
+        <p>First campus sessions held — live and streamed. Students from multiple colleges connected with global speakers for the first time.</p>
+      </div>
+      <div class="journey-step reveal">
+        <div class="journey-num">03</div>
+        <div class="journey-icon">📈</div>
+        <h4>Today & Beyond</h4>
+        <p>Expanding to more colleges, more disciplines, and a growing library of real-world sessions. Building India's most practical engineering learning platform.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta-final reveal">
+    <h2>Ready to Bridge the Gap?</h2>
+    <p>Join T2R and start learning from engineers who've built real projects across the world.</p>
+    <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
+      <a href="#sessions" class="btn btn-secondary" style="background:white; color:var(--green);" onclick="navigateTo('sessions')">Browse Sessions</a>
+      <a href="#partner" class="btn btn-secondary" onclick="navigateTo('partner')">Partner with Us</a>
+    </div>
+  </section>
+</div>
+
+<div id="page-partner" class="page-hidden">
+  <section class="page-section" style="padding-top:60px; padding-bottom:30px; text-align:center;">
+    <span class="tag-pill"><span class="pill-dot"></span>For Universities & Colleges</span>
+    <h2 style="font-size:2rem; font-weight:800; margin-bottom:14px;">Partner With T2R</h2>
+    <p style="color:var(--text-soft); max-width:600px; margin:0 auto;">Bring real-world engineering exposure to your students. Tell us about your institution and we'll get back to you to discuss how T2R can work with you.</p>
+  </section>
+  <div class="divider"></div>
+  <section class="page-section">
+    <div style="max-width:640px; margin:0 auto; background:var(--sage-2); border-radius:18px; padding:36px;" id="partnerFormWrap">
+      <div class="admin-form-group"><label>Institution Name *</label><input type="text" id="pfInstitution" placeholder="e.g. VIT Vellore"></div>
+      <div class="admin-form-row">
+        <div class="admin-form-group"><label>Contact Person *</label><input type="text" id="pfContactName" placeholder="Your full name"></div>
+        <div class="admin-form-group"><label>Designation</label><input type="text" id="pfDesignation" placeholder="e.g. HOD, Civil Engineering"></div>
+      </div>
+      <div class="admin-form-row">
+        <div class="admin-form-group"><label>Email *</label><input type="email" id="pfEmail" placeholder="you@college.edu"></div>
+        <div class="admin-form-group"><label>Phone</label><input type="tel" id="pfPhone" placeholder="Optional"></div>
+      </div>
+      <div class="admin-form-group"><label>Department / Program</label><input type="text" id="pfDepartment" placeholder="e.g. Civil Engineering, B.Tech"></div>
+      <div class="admin-form-group"><label>Approx. Number of Students</label><input type="text" id="pfStudentCount" placeholder="e.g. 60"></div>
+      <div class="admin-form-group"><label>Message *</label><textarea id="pfMessage" placeholder="Tell us about your institution and what you're looking for..."></textarea></div>
+      <button class="btn btn-primary" id="pfSubmitBtn" style="width:100%; justify-content:center; padding:14px;">Submit Inquiry</button>
+      <div id="pfSuccessMsg" style="display:none; margin-top:16px; background:#d7f0e3; color:#1f6b46; padding:14px 18px; border-radius:10px; font-size:0.9rem; font-weight:600; text-align:center;">✓ Thanks! Your inquiry has been submitted. We'll be in touch soon.</div>
+      <div id="pfErrorMsg" style="display:none; margin-top:12px; color:#b3261e; font-size:0.85rem; text-align:center;"></div>
+    </div>
+  </section>
+</div>
+
+<div id="page-speakerapply" class="page-hidden">
+  <section class="page-section" style="padding-top:60px; padding-bottom:30px; text-align:center;">
+    <span class="tag-pill"><span class="pill-dot"></span>For Professionals & Alumni</span>
+    <h2 style="font-size:2rem; font-weight:800; margin-bottom:14px;">Become a Speaker</h2>
+    <p style="color:var(--text-soft); max-width:600px; margin:0 auto;">Share your industry journey and help shape the next generation of engineers. Tell us about yourself below.</p>
+  </section>
+  <div class="divider"></div>
+  <section class="page-section">
+    <div style="max-width:640px; margin:0 auto; background:var(--sage-2); border-radius:18px; padding:36px;" id="speakerApplyFormWrap">
+      <div class="admin-form-row">
+        <div class="admin-form-group"><label>Full Name *</label><input type="text" id="saName" placeholder="Your full name"></div>
+        <div class="admin-form-group"><label>Email *</label><input type="email" id="saEmail" placeholder="you@example.com"></div>
+      </div>
+      <div class="admin-form-row">
+        <div class="admin-form-group"><label>Current Role *</label><input type="text" id="saRole" placeholder="e.g. Project Engineer"></div>
+        <div class="admin-form-group"><label>Organization *</label><input type="text" id="saOrg" placeholder="e.g. Fichtner GmbH"></div>
+      </div>
+      <div class="admin-form-row">
+        <div class="admin-form-group"><label>Country</label><input type="text" id="saCountry" placeholder="e.g. Germany"></div>
+        <div class="admin-form-group"><label>Years of Experience</label><input type="text" id="saExperience" placeholder="e.g. 5 years"></div>
+      </div>
+      <div class="admin-form-group"><label>Area of Expertise *</label>
+        <select id="saExpertise">
+          <option value="">Select an area</option>
+          <option>Soil Mechanics & Geotechnical Engineering</option>
+          <option>Hydraulic Engineering & Hydropower</option>
+          <option>Hydrogeology</option>
+          <option>Wastewater Treatment</option>
+          <option>Structures</option>
+          <option>Geoinformatics & Remote Sensing</option>
+          <option>Building Physics</option>
+          <option>Project Management</option>
+          <option>Automobile Engineering</option>
+          <option>Sustainability</option>
+          <option>Ground Water Energy (Geothermal)</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="admin-form-group"><label>Tell us about your journey & what you'd like to share *</label><textarea id="saMessage" placeholder="A short summary of your career path and topics you could speak on..."></textarea></div>
+      <div class="admin-form-group"><label>LinkedIn / Portfolio (optional)</label><input type="text" id="saLinkedin" placeholder="https://linkedin.com/in/..."></div>
+      <button class="btn btn-primary" id="saSubmitBtn" style="width:100%; justify-content:center; padding:14px;">Submit Application</button>
+      <div id="saSuccessMsg" style="display:none; margin-top:16px; background:#d7f0e3; color:#1f6b46; padding:14px 18px; border-radius:10px; font-size:0.9rem; font-weight:600; text-align:center;">✓ Thank you for applying! We'll review your application and reach out soon.</div>
+      <div id="saErrorMsg" style="display:none; margin-top:12px; color:#b3261e; font-size:0.85rem; text-align:center;"></div>
+    </div>
+  </section>
+</div>
+
+<footer>
+  <div class="footer-grid">
+    <div>
+      <div class="footer-logo"><div class="logo-badge" id="footerLogoBadge" style="width:44px;height:44px;"><img src="images/Logo/logo.jpg" alt="T2R Logo" id="footerLogoImg"></div>T2R</div>
+      <p style="font-size:0.86rem;">Theory to Reality — Bridging the gap between academic learning and real-world engineering practice for students across India.</p>
+    </div>
+    <div>
+      <h5>Explore</h5>
+      <ul><li><a href="#sessions" onclick="navigateTo('sessions')">Sessions</a></li><li><a href="#library" onclick="navigateTo('library')">Library</a></li><li><a href="#partner" onclick="navigateTo('partner')">For Colleges</a></li><li><a href="#speakerapply" onclick="navigateTo('speakerapply')">Become a Speaker</a></li></ul>
+    </div>
+    <div>
+      <h5>Contact</h5>
+      <ul><li>contact@theory2reality.com</li><li>Visakhapatnam, India</li></ul>
+    </div>
+  </div>
+  <div class="footer-bottom">© 2026 T2R — Theory to Reality. All rights reserved.</div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script>
+function initials(name){return name.split(' ').map(function(w){return w[0];}).slice(0,2).join('').toUpperCase();}
+
+function escAttr(str){
+  return String(str==null?'':str).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function showToast(msg){
+  var t=document.createElement('div');
+  t.style.position='fixed';t.style.bottom='24px';t.style.right='24px';t.style.background='#1a4d3a';
+  t.style.color='white';t.style.padding='13px 20px';t.style.borderRadius='10px';t.style.fontSize='0.88rem';
+  t.style.boxShadow='0 10px 28px rgba(0,0,0,0.18)';t.style.zIndex='2000';t.textContent=msg;
+  document.body.appendChild(t);
+  setTimeout(function(){t.remove();},3000);
+}
+
+function setupLogoFallback(imgId){
+  var img=document.getElementById(imgId);
+  if(!img)return;
+  img.addEventListener('error',function(){
+    img.style.display='none';
+    var parent=img.parentElement;
+    if(parent){parent.textContent='T2R';parent.style.fontWeight='800';parent.style.color='#1a4d3a';parent.style.fontSize='0.85rem';}
+  });
+}
+
+function setupHeroVideoFallback(){
+  var videoIds=['heroVideo','aboutVideo'];
+  for(var v=0;v<videoIds.length;v++){
+    var video=document.getElementById(videoIds[v]);
+    if(!video)continue;
+    (function(vid){
+      vid.addEventListener('error',function(){
+        var wrap=vid.parentElement;
+        if(wrap){
+          var img=document.createElement('img');
+          img.src='https://images.unsplash.com/photo-1581094288338-2314dddb7ece?w=900&q=80';
+          img.alt='Engineering in action';
+          img.style.width='100%';img.style.height='100%';img.style.objectFit='cover';img.style.display='block';
+          vid.replaceWith(img);
+        }
+      },true);
+    })(video);
+  }
+}
+
+function attachSoundToggle(videoId,btnId,sliderId){
+  var v=document.getElementById(videoId);
+  var b=document.getElementById(btnId);
+  var s=document.getElementById(sliderId);
+  if(!v||!b)return;
+  v.volume=0.2;
+  v.muted=false;
+  b.addEventListener('click',function(){
+    if(v.muted||v.volume===0){
+      v.muted=false;
+      v.volume=0.2;
+      if(s)s.value=20;
+      b.textContent='🔊';
+      v.play().catch(function(){});
+    }else{
+      v.muted=true;
+      if(s)s.value=0;
+      b.textContent='🔇';
+    }
+  });
+  if(s){
+    s.addEventListener('input',function(){
+      var val=parseInt(s.value,10)/100;
+      v.volume=val;
+      v.muted=(val===0);
+      b.textContent=val===0?'🔇':'🔊';
+      if(val>0)v.play().catch(function(){});
+    });
+  }
+}
+
+var VIDEO_PAGE_MAP={home:'heroVideo',about:'aboutVideo'};
+
+function attachPlayOverlay(videoId,overlayId){
+  var v=document.getElementById(videoId);
+  var o=document.getElementById(overlayId);
+  if(!v||!o)return;
+  v.style.cursor='pointer';
+  o.addEventListener('click',function(){
+    v.play().catch(function(){});
+  });
+  v.addEventListener('click',function(){
+    if(v.paused){v.play().catch(function(){});}
+    else{v.pause();}
+  });
+  v.addEventListener('play',function(){o.classList.add('hidden');});
+  v.addEventListener('pause',function(){o.classList.remove('hidden');});
+}
+
+function manageVideoPlayback(activePage){
+  var pages=Object.keys(VIDEO_PAGE_MAP);
+  for(var i=0;i<pages.length;i++){
+    var v=document.getElementById(VIDEO_PAGE_MAP[pages[i]]);
+    if(!v)continue;
+    if(v.currentTime>0){
+      v.pause();
+      v.load();
+    }
+  }
+}
+
+function pauseAllSiteVideos(){
+  var ids=['heroVideo','aboutVideo'];
+  for(var i=0;i<ids.length;i++){
+    var v=document.getElementById(ids[i]);
+    if(v&&v.currentTime>0){
+      v.pause();
+      v.load();
+    }
+  }
+}
+
+document.addEventListener('visibilitychange',function(){
+  if(document.hidden)pauseAllSiteVideos();
+});
+window.addEventListener('blur',pauseAllSiteVideos);
+window.addEventListener('pagehide',pauseAllSiteVideos);
+
+function attachSeekBar(videoId,seekId,timeId,ppBtnId){
+  var v=document.getElementById(videoId);
+  var seek=document.getElementById(seekId);
+  var timeEl=document.getElementById(timeId);
+  var pp=document.getElementById(ppBtnId);
+  if(!v||!seek)return;
+  var scrubbing=false;
+  function fmt(t){
+    t=Math.max(0,Math.floor(t||0));
+    var m=Math.floor(t/60);
+    var s=t%60;
+    return m+':'+(s<10?'0':'')+s;
+  }
+  function updateTimeLabel(){
+    if(timeEl)timeEl.textContent=fmt(v.currentTime)+' / '+fmt(v.duration);
+  }
+  v.addEventListener('loadedmetadata',function(){
+    seek.max=Math.floor(v.duration)||100;
+    updateTimeLabel();
+  });
+  v.addEventListener('timeupdate',function(){
+    if(!scrubbing)seek.value=Math.floor(v.currentTime);
+    updateTimeLabel();
+  });
+  seek.addEventListener('input',function(){
+    scrubbing=true;
+    v.currentTime=parseFloat(seek.value);
+    updateTimeLabel();
+  });
+  seek.addEventListener('change',function(){scrubbing=false;});
+  if(pp){
+    pp.addEventListener('click',function(){
+      if(v.paused){v.play().catch(function(){});}
+      else{v.pause();}
+    });
+    v.addEventListener('play',function(){pp.textContent='⏸';});
+    v.addEventListener('pause',function(){pp.textContent='▶';});
+  }
+}
+
+function lockLandscapeOrientation(){
+  if(screen.orientation&&screen.orientation.lock){
+    screen.orientation.lock('landscape').catch(function(){});
+  }
+}
+
+function unlockOrientation(){
+  if(screen.orientation&&screen.orientation.unlock){
+    try{screen.orientation.unlock();}catch(e){}
+  }
+}
+
+document.addEventListener('fullscreenchange',function(){
+  if(!document.fullscreenElement)unlockOrientation();
+});
+document.addEventListener('webkitfullscreenchange',function(){
+  if(!document.webkitFullscreenElement)unlockOrientation();
+});
+
+function attachFullscreenToggle(videoId,containerId,btnId){
+  var v=document.getElementById(videoId);
+  var c=document.getElementById(containerId);
+  var b=document.getElementById(btnId);
+  if(!v||!c||!b)return;
+  b.addEventListener('click',function(){
+    var fsEl=document.fullscreenElement||document.webkitFullscreenElement;
+    if(!fsEl){
+      if(c.requestFullscreen){
+        var req=c.requestFullscreen();
+        if(req&&req.then){req.then(lockLandscapeOrientation).catch(function(){});}
+        else{setTimeout(lockLandscapeOrientation,300);}
+      }else if(c.webkitRequestFullscreen){
+        c.webkitRequestFullscreen();
+        setTimeout(lockLandscapeOrientation,300);
+      }else if(v.webkitEnterFullscreen){
+        v.webkitEnterFullscreen();
+      }
+    }else{
+      if(document.exitFullscreen)document.exitFullscreen();
+      else if(document.webkitExitFullscreen)document.webkitExitFullscreen();
+    }
+  });
+}
+
+function attachAutoHideControls(containerId,videoId){
+  var c=document.getElementById(containerId);
+  var v=document.getElementById(videoId);
+  if(!c||!v)return;
+  var hideTimer=null;
+  function scheduleHide(){
+    if(hideTimer)clearTimeout(hideTimer);
+    hideTimer=setTimeout(function(){c.classList.add('controls-hidden');},3000);
+  }
+  c.addEventListener('click',function(){
+    if(!v.paused){
+      c.classList.remove('controls-hidden');
+      scheduleHide();
+    }
+  });
+  c.addEventListener('touchstart',function(){
+    if(!v.paused){
+      c.classList.remove('controls-hidden');
+      scheduleHide();
+    }
+  },{passive:true});
+  v.addEventListener('play',function(){
+    if(hideTimer)clearTimeout(hideTimer);
+    c.classList.add('controls-hidden');
+  });
+  v.addEventListener('pause',function(){
+    if(hideTimer)clearTimeout(hideTimer);
+    c.classList.remove('controls-hidden');
+  });
+}
+
+function attachEndedReset(videoId){
+  var v=document.getElementById(videoId);
+  if(!v)return;
+  v.addEventListener('ended',function(){v.pause();v.load();});
+  var obs=new IntersectionObserver(function(entries){
+    if(!entries[0].isIntersecting&&!v.paused){v.pause();v.load();}
+  },{threshold:0.25});
+  obs.observe(v);
+}
+
+var CAMPUS_FALLBACK_PHOTOS=[
+  {url:"https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=600&q=70",caption:"Sample — add real photos via data/campus.json"},
+  {url:"https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&q=70",caption:"Sample — add real photos via data/campus.json"},
+  {url:"https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?w=600&q=70",caption:"Sample — add real photos via data/campus.json"},
+  {url:"https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=600&q=70",caption:"Sample — add real photos via data/campus.json"}
+];
+
+function renderCampusFilmstrip(photos){
+  var strip=document.getElementById('campusFilmstrip');
+  if(!strip)return;
+  var doubled=photos.concat(photos);
+  var html='';
+  for(var i=0;i<doubled.length;i++){
+    var p=doubled[i];
+    var captionHtml=p.caption?('<div class="campus-filmstrip-caption">'+p.caption+'</div>'):'';
+    html+='<div class="campus-filmstrip-item"><img src="'+p.url+'" alt="'+(p.caption||'Campus session')+'" loading="lazy" class="lightbox-trigger" data-fullsrc="'+escAttr(p.url)+'" data-caption="'+escAttr(p.caption||'Campus session')+'">'+captionHtml+'</div>';
+  }
+  strip.innerHTML=html;
+}
+
+async function loadCampusPhotos(){
+  var photos=await loadJsonData('data/campus.json');
+  if(!photos||!photos.length){photos=CAMPUS_FALLBACK_PHOTOS;}
+  renderCampusFilmstrip(photos);
+}
+
+var SPEAKERS=[];
+var SESSIONS=[];
+var LIBRARY_RESOURCES=[];
+
+async function loadJsonData(path){
+  try{
+    var res=await fetch(path);
+    if(!res.ok)throw new Error('Fetch failed: '+path);
+    return await res.json();
+  }catch(err){
+    console.error('Could not load '+path,err);
+    return null;
+  }
+}
+
+async function loadAllSiteData(){
+  var speakersData=await loadJsonData('data/speakers.json');
+  if(speakersData){SPEAKERS=speakersData;}
+  var sessionsData=await loadJsonData('data/sessions.json');
+  if(sessionsData){SESSIONS=sessionsData;}
+  var libraryData=await loadJsonData('data/library.json');
+  if(libraryData){LIBRARY_RESOURCES=libraryData;}
+  initLeafletMap();
+  renderCountryChips();
+  renderFullSpeakerGrid();
+  renderLibraryGrid();
+  renderBranchChips();
+  renderSessions();
+  renderFoundersGrid();
+}
+
+function speakerAvatarHtml(s,sizeClass){
+  if(s.photo){
+    return '<img src="'+s.photo+'" alt="'+s.name+'" class="'+sizeClass+' lightbox-trigger" style="border-radius:50%; object-fit:cover;" data-fallback-initials="'+initials(s.name)+'" data-fullsrc="'+escAttr(s.photo)+'" data-caption="'+escAttr(s.name)+'">';
+  }
+  return '<div class="'+sizeClass+'" style="background:var(--sage); color:var(--green); display:flex; align-items:center; justify-content:center; font-weight:700;">'+initials(s.name)+'</div>';
+}
+
+function attachAvatarFallbacks(container){
+  if(!container)return;
+  var imgs=container.querySelectorAll('img[data-fallback-initials]');
+  for(var i=0;i<imgs.length;i++){
+    imgs[i].addEventListener('error',function(){
+      var fallback=document.createElement('div');
+      fallback.className=this.className;
+      fallback.style.background='var(--sage)';fallback.style.color='var(--green)';fallback.style.display='flex';
+      fallback.style.alignItems='center';fallback.style.justifyContent='center';fallback.style.fontWeight='700';
+      fallback.textContent=this.getAttribute('data-fallback-initials')||'';
+      this.replaceWith(fallback);
+    });
+  }
+}
+
+var activeCountryFilter=null;
+var leafletMapInstance=null;
+var leafletMarkers={};
+
+var COUNTRY_COORDS={
+  "Germany":[51.1657,10.4515],"India":[20.5937,78.9629],"USA":[37.0902,-95.7129],
+  "Turkey":[38.9637,35.2433],"Italy":[41.8719,12.5674],"Nepal":[28.3949,84.1240],"Tunisia":[33.8869,9.5375]
+};
+
+function makePinIcon(color,size){
+  return L.divIcon({
+    className:'custom-map-pin',
+    html:'<div style="width:'+size+'px;height:'+size+'px;border-radius:50%;background:'+color+';border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3);"></div>',
+    iconSize:[size+6,size+6],iconAnchor:[(size+6)/2,(size+6)/2]
+  });
+}
+
+function addCountryMarker(country){
+  if(!leafletMapInstance||leafletMarkers[country]||!COUNTRY_COORDS[country])return;
+  var greenIcon=makePinIcon('#1a4d3a',16);
+  var goldIcon=makePinIcon('#e6a623',20);
+  var marker=L.marker(COUNTRY_COORDS[country],{icon:greenIcon}).addTo(leafletMapInstance);
+  marker.bindTooltip(country,{direction:'top'});
+  marker._t2rCountry=country;
+  marker.on('click',function(){filterByCountry(this._t2rCountry);});
+  leafletMarkers[country]={marker:marker,greenIcon:greenIcon,goldIcon:goldIcon};
+}
+
+function initLeafletMap(){
+  var mapEl=document.getElementById('leafletMap');
+  if(!mapEl||leafletMapInstance||typeof L==='undefined')return;
+  var isMobile=window.innerWidth<=700;
+  leafletMapInstance=L.map('leafletMap',{
+    scrollWheelZoom:!isMobile,
+    dragging:!isMobile,
+    touchZoom:!isMobile,
+    doubleClickZoom:!isMobile,
+    minZoom:1,maxZoom:8
+  }).setView([20,30],isMobile?1:2);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'&copy; OpenStreetMap contributors',maxZoom:8}).addTo(leafletMapInstance);
+  var countries=[];
+  for(var i=0;i<SPEAKERS.length;i++){if(countries.indexOf(SPEAKERS[i].country)===-1)countries.push(SPEAKERS[i].country);}
+  for(var j=0;j<countries.length;j++){addCountryMarker(countries[j]);}
+  setTimeout(function(){if(leafletMapInstance)leafletMapInstance.invalidateSize();},300);
+}
+
+window.addEventListener('resize',function(){
+  if(leafletMapInstance)leafletMapInstance.invalidateSize();
+});
+
+function renderCountryChips(){
+  var container=document.getElementById('countryChipsContainer');
+  if(!container)return;
+  var countries=[];
+  for(var i=0;i<SPEAKERS.length;i++){if(countries.indexOf(SPEAKERS[i].country)===-1)countries.push(SPEAKERS[i].country);}
+  var html='';
+  for(var j=0;j<countries.length;j++){html+='<span class="country-chip" data-country="'+countries[j]+'">'+countries[j]+'</span>';}
+  container.innerHTML=html;
+  var chips=container.querySelectorAll('.country-chip');
+  for(var c=0;c<chips.length;c++){chips[c].addEventListener('click',function(){filterByCountry(this.dataset.country);});}
+}
+
+function filterByCountry(country){
+  activeCountryFilter=country;
+  var titleEl=document.getElementById('mapSideTitle');
+  titleEl.textContent=country;
+  titleEl.style.display='inline';
+  var count=0;
+  for(var i=0;i<SPEAKERS.length;i++){if(SPEAKERS[i].country===country)count++;}
+  document.getElementById('mapSideSub').textContent=count+' speaker(s) from '+country;
+
+  var countryKeys=Object.keys(leafletMarkers);
+  for(var k=0;k<countryKeys.length;k++){
+    var key=countryKeys[k];var entry=leafletMarkers[key];
+    entry.marker.setIcon(key===country?entry.goldIcon:entry.greenIcon);
+  }
+  if(leafletMapInstance&&COUNTRY_COORDS[country]){leafletMapInstance.flyTo(COUNTRY_COORDS[country],4,{duration:0.8});}
+  var chips=document.querySelectorAll('.country-chip');
+  for(var c2=0;c2<chips.length;c2++){
+    chips[c2].style.background=chips[c2].dataset.country===country?'#1a4d3a':'';
+    chips[c2].style.color=chips[c2].dataset.country===country?'white':'';
+  }
+
+  var countryDropdown=document.getElementById('speakerCountryFilter');
+  if(countryDropdown){
+    countryDropdown.value=country;
+    renderFullSpeakerGrid();
+    document.getElementById('fullSpeakerGrid').scrollIntoView({behavior:'smooth',block:'nearest'});
+  }
+}
+
+function populateSpeakerFilterOptions(){
+  var expSelect=document.getElementById('speakerExpertiseFilter');
+  var countrySelect=document.getElementById('speakerCountryFilter');
+  if(expSelect&&expSelect.options.length<=1){
+    var expertiseList=[];
+    for(var i=0;i<SPEAKERS.length;i++){if(expertiseList.indexOf(SPEAKERS[i].expertise)===-1)expertiseList.push(SPEAKERS[i].expertise);}
+    expertiseList.sort();
+    for(var j=0;j<expertiseList.length;j++){
+      var opt=document.createElement('option');opt.value=expertiseList[j];opt.textContent=expertiseList[j];expSelect.appendChild(opt);
+    }
+  }
+  if(countrySelect&&countrySelect.options.length<=1){
+    var countryList=[];
+    for(var k=0;k<SPEAKERS.length;k++){if(countryList.indexOf(SPEAKERS[k].country)===-1)countryList.push(SPEAKERS[k].country);}
+    countryList.sort();
+    for(var m=0;m<countryList.length;m++){
+      var opt2=document.createElement('option');opt2.value=countryList[m];opt2.textContent=countryList[m];countrySelect.appendChild(opt2);
+    }
+  }
+}
+
+var speakersShowAll=false;
+
+function renderFullSpeakerGrid(){
+  var grid=document.getElementById('fullSpeakerGrid');
+  var emptyState=document.getElementById('speakerEmptyState');
+  if(!grid)return;
+  populateSpeakerFilterOptions();
+  var searchEl=document.getElementById('speakerSearch');
+  var expEl=document.getElementById('speakerExpertiseFilter');
+  var countryEl=document.getElementById('speakerCountryFilter');
+  var query=searchEl?searchEl.value.toLowerCase().trim():'';
+  var expertiseFilter=expEl?expEl.value:'All';
+  var countryFilter=countryEl?countryEl.value:'All';
+  var list=[];
+  for(var i=0;i<SPEAKERS.length;i++){
+    var s=SPEAKERS[i];
+    if(expertiseFilter!=='All'&&s.expertise!==expertiseFilter)continue;
+    if(countryFilter!=='All'&&s.country!==countryFilter)continue;
+    if(query){
+      var matches=s.name.toLowerCase().indexOf(query)!==-1||s.org.toLowerCase().indexOf(query)!==-1||s.expertise.toLowerCase().indexOf(query)!==-1||s.role.toLowerCase().indexOf(query)!==-1||s.country.toLowerCase().indexOf(query)!==-1;
+      if(!matches)continue;
+    }
+    list.push(s);
+  }
+  if(list.length===0){
+    grid.style.display='none';if(emptyState)emptyState.style.display='block';
+    var vab0=document.getElementById('speakersViewAllBtn');if(vab0)vab0.style.display='none';
+    return;
+  }
+  grid.style.display='grid';if(emptyState)emptyState.style.display='none';
+  var visibleList=speakersShowAll?list:list.slice(0,10);
+  var html='';
+  for(var j=0;j<visibleList.length;j++){
+    var sp=visibleList[j];
+    var founderTag=sp.founder?'<span class="speaker-founder-tag">Founder</span>':'';
+    var expHtml=sp.experience?('<div style="font-size:0.82rem; color:var(--text-soft); font-weight:500; margin-bottom:10px;">💼 Experience: '+escAttr(sp.experience)+'</div>'):'';
+    html+='<div class="speaker-full-card"><div class="speaker-full-head">'+speakerAvatarHtml(sp,'speaker-full-avatar')+'<div><h4>'+sp.name+founderTag+'</h4><div class="loc">🌐 '+sp.country+'</div></div></div><div class="role">'+sp.role+'</div><div class="org">'+sp.org+'</div>'+expHtml+'<span class="speaker-expertise-tag">'+sp.expertise+'</span></div>';
+  }
+  grid.innerHTML=html;
+  attachAvatarFallbacks(grid);
+  var viewAllBtn=document.getElementById('speakersViewAllBtn');
+  if(viewAllBtn){
+    if(list.length>10&&!speakersShowAll){viewAllBtn.style.display='inline-flex';viewAllBtn.textContent='View All '+list.length+' Speakers';}
+    else{viewAllBtn.style.display='none';}
+  }
+}
+
+var founderEmails={
+  "Suresh Tankala":"sureshtankala01@gmail.com","Pradeep Hegde":"pradeep.hegde@fichtner.de","Narayana Rao Bhogapurapu":"narayana@caltech.edu"
+};
+
+function renderFoundersGrid(){
+  var grid=document.getElementById('foundersGrid');
+  if(!grid)return;
+  var founders=[];
+  for(var i=0;i<SPEAKERS.length;i++){if(SPEAKERS[i].founder)founders.push(SPEAKERS[i]);}
+  var html='';
+  for(var j=0;j<founders.length;j++){
+    var s=founders[j];
+    var email=founderEmails[s.name];
+    var emailHtml=email?('<a href="mailto:'+email+'" style="font-size:0.82rem; color:var(--text-soft); display:inline-flex; align-items:center; gap:5px; margin-top:8px;">✉️ Email</a>'):'';
+    var photoBlock;
+    if(s.photo){
+      photoBlock='<img src="'+s.photo+'" alt="'+s.name+'" class="lightbox-trigger" style="width:100%; height:100%; object-fit:cover; display:block;" data-fallback-initials="'+initials(s.name)+'" data-fullsrc="'+escAttr(s.photo)+'" data-caption="'+escAttr(s.name)+'">';
+    }else{
+      photoBlock='<div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-size:2.4rem; font-weight:700; color:var(--green); background:var(--sage);">'+initials(s.name)+'</div>';
+    }
+    var expHtml2=s.experience?('<div style="font-size:0.8rem; color:var(--text-soft); margin-bottom:10px;">💼 Experience: '+escAttr(s.experience)+'</div>'):'';
+    html+='<div class="career-card" style="padding:0; overflow:hidden;"><div style="aspect-ratio:1/1; background:var(--sage-2); overflow:hidden;">'+photoBlock+'</div><div style="padding:20px;"><span class="speaker-founder-tag" style="margin-left:0; margin-bottom:10px; display:inline-block;">Co-Founder</span><h4 style="margin-bottom:3px; font-size:1.05rem;">'+s.name+'</h4><div style="font-size:0.84rem; color:var(--green); font-weight:600; margin-bottom:12px;">'+s.role+', '+s.org+'</div>'+expHtml2+'<p style="font-size:0.85rem; color:var(--text-soft); margin-bottom:12px;">'+s.blurb+'</p>'+emailHtml+'</div></div>';
+  }
+  grid.innerHTML=html;
+  attachAvatarFallbacks(grid);
+}
+
+var libraryShowAll=false;
+
+function renderLibraryGrid(){
+  var grid=document.getElementById('libGrid');
+  var emptyState=document.getElementById('libEmptyState');
+  if(!grid)return;
+  var searchEl=document.getElementById('libSearch');
+  var branchEl=document.getElementById('libBranchFilter');
+  var typeEl=document.getElementById('libTypeFilter');
+  var query=searchEl?searchEl.value.toLowerCase().trim():'';
+  var branchFilter=branchEl?branchEl.value:'All';
+  var typeFilter=typeEl?typeEl.value:'All';
+  var list=[];
+  for(var i=0;i<LIBRARY_RESOURCES.length;i++){
+    var r=LIBRARY_RESOURCES[i];
+    if(branchFilter!=='All'&&r.branch!==branchFilter)continue;
+    if(typeFilter!=='All'&&r.type!==typeFilter)continue;
+    if(query){
+      var matches=r.title.toLowerCase().indexOf(query)!==-1||r.desc.toLowerCase().indexOf(query)!==-1;
+      if(!matches)continue;
+    }
+    list.push(r);
+  }
+  if(list.length===0){
+    grid.style.display='none';if(emptyState)emptyState.style.display='block';
+    var vab0=document.getElementById('libraryViewAllBtn');if(vab0)vab0.style.display='none';
+    return;
+  }
+  grid.style.display='grid';if(emptyState)emptyState.style.display='none';
+  var visibleList=libraryShowAll?list:list.slice(0,10);
+  var typeIcons={PDF:'📄',Recording:'🎥',Article:'📰',Tutorial:'🛠️'};
+  var html='';
+  for(var j=0;j<visibleList.length;j++){
+    var res=visibleList[j];
+    var ic=typeIcons[res.type]||'📄';
+    var linkWrap=res.fileUrl?('<a href="'+res.fileUrl+'" target="_blank" rel="noopener" style="text-decoration:none; color:inherit;">'):'';
+    var linkClose=res.fileUrl?'</a>':'';
+    var downloadTag=res.fileUrl?'<span class="lib-tag" style="background:var(--green); color:white;">⬇ Download</span>':'';
+    html+=linkWrap+'<div class="lib-card"><div class="lib-ic-box">'+ic+'</div><div><h5>'+res.title+'</h5><p class="desc">'+res.desc+'</p><div class="lib-tags"><span class="lib-tag branch">'+res.branch+'</span><span class="lib-tag type">'+res.type+'</span>'+downloadTag+'</div></div></div>'+linkClose;
+  }
+  grid.innerHTML=html;
+  var viewAllBtn=document.getElementById('libraryViewAllBtn');
+  if(viewAllBtn){
+    if(list.length>10&&!libraryShowAll){viewAllBtn.style.display='inline-flex';viewAllBtn.textContent='View All '+list.length+' Resources';}
+    else{viewAllBtn.style.display='none';}
+  }
+}
+
+var BRANCHES=['All Branches','Mechanical','Electrical','Computer Science','Civil','Electronics','General'];
+var activeBranchFilter='All Branches';
+var activeTab='all';
+var sessionsShowAll=false;
+
+function renderBranchChips(){
+  var row=document.getElementById('branchFilterRow');
+  if(!row)return;
+  var html='';
+  for(var i=0;i<BRANCHES.length;i++){
+    var b=BRANCHES[i];var activeClass=(b===activeBranchFilter)?'active':'';
+    html+='<button class="branch-chip '+activeClass+'" data-branch="'+b+'">'+b+'</button>';
+  }
+  row.innerHTML=html;
+  var chips=row.querySelectorAll('.branch-chip');
+  for(var j=0;j<chips.length;j++){
+    chips[j].addEventListener('click',function(){activeBranchFilter=this.dataset.branch;renderBranchChips();renderSessions();});
+  }
+}
+
+function formatDate(iso){
+  var d=new Date(iso+'T00:00:00');
+  return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+}
+
+function getFilteredSessions(){
+  var searchEl=document.getElementById('sessionSearch');
+  var query=searchEl?searchEl.value.toLowerCase().trim():'';
+  var result=[];
+  for(var i=0;i<SESSIONS.length;i++){
+    var s=SESSIONS[i];
+    if(activeTab==='upcoming'&&s.status!=='upcoming')continue;
+    if(activeTab==='past'&&s.status!=='completed')continue;
+    if(activeBranchFilter!=='All Branches'&&s.branch!==activeBranchFilter)continue;
+    if(query){
+      var matches=s.title.toLowerCase().indexOf(query)!==-1||s.speaker.toLowerCase().indexOf(query)!==-1||s.desc.toLowerCase().indexOf(query)!==-1;
+      if(!matches)continue;
+    }
+    result.push(s);
+  }
+  return result;
+}
+
+function renderSessions(){
+  var grid=document.getElementById('sessionGrid');
+  var emptyState=document.getElementById('sessionEmptyState');
+  if(!grid)return;
+  var list=getFilteredSessions();
+  var cu=document.getElementById('countUpcoming');
+  var cp=document.getElementById('countPast');
+  var ca=document.getElementById('countAll');
+  var upCount=0,pastCount=0;
+  for(var i=0;i<SESSIONS.length;i++){
+    if(activeBranchFilter!=='All Branches'&&SESSIONS[i].branch!==activeBranchFilter)continue;
+    if(SESSIONS[i].status==='upcoming')upCount++;
+    if(SESSIONS[i].status==='completed')pastCount++;
+  }
+  if(cu)cu.textContent=upCount;if(cp)cp.textContent=pastCount;
+  if(ca)ca.textContent=upCount+pastCount;
+  if(list.length===0){
+    grid.style.display='none';if(emptyState)emptyState.style.display='block';
+    var vab0=document.getElementById('sessionsViewAllBtn');if(vab0)vab0.style.display='none';
+    return;
+  }
+  grid.style.display='grid';if(emptyState)emptyState.style.display='none';
+  var visibleList=sessionsShowAll?list:list.slice(0,10);
+  var html='';
+  for(var j=0;j<visibleList.length;j++){
+    var s=visibleList[j];
+    var footerRight;
+    if(s.status==='completed'&&s.recording){
+      footerRight=s.recordingUrl?('<a href="'+s.recordingUrl+'" target="_blank" rel="noopener" class="session-action-link">Watch Recording →</a>'):('<button class="session-action-link" onclick="showToast(\'Recording link coming soon\')">Watch Recording →</button>');
+    }else if(s.status==='upcoming'){
+      footerRight='<button class="session-register-btn" onclick="openSessionModal(\''+s.id+'\')">Register</button>';
+    }else{
+      footerRight='<span style="font-size:0.8rem; color:var(--text-soft);">Completed</span>';
+    }
+    var guestBadge=s.guest?'<span class="sbadge guest">Guest Lecture</span>':'';
+    var statusBadge=s.status==='completed'?'Completed':'Upcoming';
+    var statusClass=s.status==='completed'?'completed':'upcoming';
+    var shortDesc=s.desc.length>110?(s.desc.slice(0,110)+'…'):s.desc;
+    html+='<div class="session-card" onclick="openSessionDetail(\''+s.id+'\')" style="cursor:pointer;"><div class="session-thumb"><img src="'+s.img+'" alt="'+escAttr(s.title)+'" class="lightbox-trigger" data-fullsrc="'+escAttr(s.img)+'" data-caption="'+escAttr(s.title)+'"><div class="session-badge-row"><span class="sbadge '+statusClass+'">'+statusBadge+'</span>'+guestBadge+'</div></div><div class="session-body"><h4>'+s.title+'</h4><p class="desc">'+shortDesc+'</p><div class="session-speaker"><div class="mini-avatar" style="width:32px;height:32px;font-size:0.78rem;">'+initials(s.speaker)+'</div><div class="session-speaker-info"><h6>'+s.speaker+'</h6><span>'+s.speakerRole+'</span></div></div><div class="session-meta-row"><span>📅 '+formatDate(s.date)+'</span><span>🕐 '+s.time+'</span><span>⏱ '+s.duration+'</span></div><div class="session-footer"><span class="session-branch-tag">'+s.branch+'</span>'+footerRight+'</div></div></div>';
+  }
+  grid.innerHTML=html;
+  var viewAllBtn=document.getElementById('sessionsViewAllBtn');
+  if(viewAllBtn){
+    if(list.length>10&&!sessionsShowAll){viewAllBtn.style.display='inline-flex';viewAllBtn.textContent='View All '+list.length+' Sessions';}
+    else{viewAllBtn.style.display='none';}
+  }
+}
+
+function openImageLightbox(src,caption){
+  var overlay=document.getElementById('imgLightboxOverlay');
+  var img=document.getElementById('imgLightboxImg');
+  var cap=document.getElementById('imgLightboxCaption');
+  if(!overlay||!img)return;
+  img.src=src;img.alt=caption||'';
+  if(cap)cap.textContent=caption||'';
+  overlay.classList.add('open');
+}
+
+function closeImageLightbox(){
+  var overlay=document.getElementById('imgLightboxOverlay');
+  if(overlay)overlay.classList.remove('open');
+}
+
+function openSessionDetail(sessionId){
+  var s=null;
+  for(var i=0;i<SESSIONS.length;i++){if(SESSIONS[i].id===sessionId){s=SESSIONS[i];break;}}
+  if(!s)return;
+  var dialog=document.getElementById('sessionDetailDialog');
+  var sdBox=document.getElementById('sessionDetailBox');
+  if(!dialog||!sdBox)return;
+  var statusLabel=s.status==='completed'?'Completed':'Upcoming';
+  var statusClass=s.status==='completed'?'completed':'upcoming';
+  var guestBadge=s.guest?'<span class="sbadge guest" style="position:static;margin-left:4px;">Guest Lecture</span>':'';
+  var actionBtn='';
+  if(s.status==='upcoming'){
+    actionBtn='<button id="sdRegisterBtn" class="btn btn-primary" style="font-size:0.88rem;padding:11px 20px;">Register for this Session</button>';
+  }else if(s.status==='completed'&&s.recording&&s.recordingUrl){
+    actionBtn='<a href="'+s.recordingUrl+'" target="_blank" rel="noopener" class="btn btn-primary" style="font-size:0.88rem;padding:11px 20px;">▶ Watch Recording</a>';
+  }else{
+    actionBtn='<span style="font-size:0.85rem;color:var(--text-soft);">Recording coming soon</span>';
+  }
+  sdBox.innerHTML=
+    '<button id="sdCloseX" style="position:absolute;top:14px;right:14px;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.95);border:1px solid #ddd;font-size:1.1rem;cursor:pointer;z-index:10;box-shadow:0 2px 8px rgba(0,0,0,0.15);display:flex;align-items:center;justify-content:center;">✕</button>'
+   +'<img src="'+s.img+'" style="width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:20px 20px 0 0;display:block;">'
+   +'<div style="padding:28px 30px 30px;">'
+   +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;"><span class="sbadge '+statusClass+'" style="position:static;">'+statusLabel+'</span>'+guestBadge+'<span class="session-branch-tag">'+s.branch+'</span></div>'
+   +'<h2 style="font-size:1.3rem;font-weight:800;margin-bottom:12px;letter-spacing:-0.02em;font-family:Plus Jakarta Sans,sans-serif;">'+s.title+'</h2>'
+   +'<div style="display:flex;gap:14px;flex-wrap:wrap;font-size:0.82rem;color:var(--text-soft);margin-bottom:16px;"><span>📅 '+formatDate(s.date)+'</span><span>🕐 '+s.time+'</span><span>⏱ '+s.duration+'</span></div>'
+   +'<div style="display:flex;align-items:center;gap:12px;padding:16px;background:var(--sage-2);border-radius:12px;margin-bottom:18px;"><div class="mini-avatar" style="width:44px;height:44px;font-size:0.95rem;flex-shrink:0;">'+initials(s.speaker)+'</div><div><div style="font-size:0.95rem;font-weight:700;">'+s.speaker+'</div><div style="font-size:0.82rem;color:var(--text-soft);">'+s.speakerRole+'</div></div></div>'
+   +'<p style="font-size:0.93rem;color:var(--text-soft);line-height:1.75;margin-bottom:22px;">'+s.desc+'</p>'
+   +'<div style="display:flex;justify-content:space-between;align-items:center;padding-top:16px;border-top:1px solid var(--border);gap:12px;flex-wrap:wrap;">'+actionBtn
+   +'<button id="sdCloseBtn" class="btn btn-secondary" style="font-size:0.85rem;padding:10px 18px;">Close</button></div></div>';
+  dialog.showModal();
+  document.getElementById('sdCloseX').addEventListener('click',function(){dialog.close();});
+  document.getElementById('sdCloseBtn').addEventListener('click',function(){dialog.close();});
+  var reg=document.getElementById('sdRegisterBtn');
+  if(reg)reg.addEventListener('click',function(){dialog.close();setTimeout(function(){openSessionModal(s.id);},80);});
+}
+
+function closeSessionDetail(){
+  var dialog=document.getElementById('sessionDetailDialog');
+  if(dialog&&dialog.open)dialog.close();
+  document.body.style.overflow='';
+}
+
+function closeSessionDetail(){
+  var overlay=document.getElementById('sessionDetailOverlay');
+  overlay.classList.remove('open');
+  document.body.style.overflow='';
+}
+
+function openSessionModal(sessionId){
+  var s=null;
+  for(var i=0;i<SESSIONS.length;i++){if(SESSIONS[i].id===sessionId){s=SESSIONS[i];break;}}
+  if(!s)return;
+  var overlay=document.getElementById('sessionModalOverlay');
+  var content=document.getElementById('sessionModalContent');
+  content.innerHTML='<h3 style="color:var(--green); margin-bottom:10px; font-size:1.15rem;">'+s.title+'</h3><p style="font-size:0.85rem; color:var(--text-soft); margin-bottom:14px;">'+s.desc+'</p><div style="font-size:0.85rem; margin-bottom:18px;"><div style="margin-bottom:6px;"><strong>Speaker:</strong> '+s.speaker+'</div><div style="margin-bottom:6px;"><strong>Date:</strong> '+formatDate(s.date)+' · '+s.time+'</div><div><strong>Duration:</strong> '+s.duration+'</div></div><div class="admin-form-group"><label>Your Name *</label><input type="text" id="regName"></div><div class="admin-form-group"><label>Your Email *</label><input type="email" id="regEmail"></div><button class="btn-go" id="confirmRegisterBtn">Confirm Registration</button><button class="role-option" id="addToCalendarBtn" style="margin-top:10px; justify-content:center;">📅 Add to Calendar (.ics)</button><a href="#" class="back-link" id="cancelRegisterBtn">Cancel</a>';
+  overlay.style.display='flex';
+  document.getElementById('confirmRegisterBtn').addEventListener('click',function(){registerForSession(s);});
+  document.getElementById('addToCalendarBtn').addEventListener('click',function(){downloadIcs(s);});
+  document.getElementById('cancelRegisterBtn').addEventListener('click',function(e){e.preventDefault();overlay.style.display='none';});
+}
+
+function registerForSession(s){
+  var name=document.getElementById('regName').value.trim();
+  var email=document.getElementById('regEmail').value.trim();
+  if(!name||!email){showToast('Please enter your name and email');return;}
+  document.getElementById('sessionModalOverlay').style.display='none';
+  showToast('Registered! A confirmation will be sent to '+email);
+}
+
+function downloadIcs(s){
+  var dateStr=s.date.replace(/-/g,'');
+  var timeMatch=s.time.match(/(\d+):(\d+)\s*(AM|PM)/i);
+  var hour=9,min=0;
+  if(timeMatch){
+    hour=parseInt(timeMatch[1]);min=parseInt(timeMatch[2]);
+    if(/PM/i.test(timeMatch[3])&&hour!==12)hour+=12;
+    if(/AM/i.test(timeMatch[3])&&hour===12)hour=0;
+  }
+  var durationMin=parseInt(s.duration)||90;
+  var startStr=dateStr+'T'+String(hour).padStart(2,'0')+String(min).padStart(2,'0')+'00';
+  var endTotalMin=hour*60+min+durationMin;
+  var endHour=Math.floor(endTotalMin/60)%24;
+  var endMin=endTotalMin%60;
+  var endStr=dateStr+'T'+String(endHour).padStart(2,'0')+String(endMin).padStart(2,'0')+'00';
+  var icsLines=['BEGIN:VCALENDAR','VERSION:2.0','BEGIN:VEVENT','SUMMARY:'+s.title.replace(/,/g,'\\,'),'DESCRIPTION:Speaker: '+s.speaker+' | T2R - Theory to Reality','DTSTART:'+startStr,'DTEND:'+endStr,'LOCATION:Online','END:VEVENT','END:VCALENDAR'];
+  var ics=icsLines.join('\r\n');
+  var blob=new Blob([ics],{type:'text/calendar'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=url;a.download=s.title.replace(/[^a-z0-9]+/gi,'_')+'.ics';
+  document.body.appendChild(a);a.click();a.remove();
+  URL.revokeObjectURL(url);
+}
+
+var GOOGLE_FORM_PARTNER={
+  action:'https://docs.google.com/forms/d/e/1FAIpQLScbrQXKfuzIIDwcGm8G_KhQZvJKHo81ufp81qaPNRfNJZFjXQ/formResponse',
+  fields:{institution:'entry.1247555719',contactName:'entry.905747467',designation:'entry.1493768612',email:'entry.1923057498',phone:'entry.621362513',department:'entry.833819075',studentCount:'entry.1988630701',message:'entry.1395325285'}
+};
+
+var GOOGLE_FORM_SPEAKER={
+  action:'https://docs.google.com/forms/d/e/1FAIpQLSef3IowOoZ-XZzqQ_v33WJf69zq5i-YIwMDjocXRfxtLO2pDQ/formResponse',
+  fields:{name:'entry.1569697635',email:'entry.389772425',role:'entry.1241882108',org:'entry.731609774',country:'entry.799977999',experience:'entry.1578795549',expertise:'entry.1160191441',message:'entry.2002451825',linkedin:'entry.127104616'}
+};
+
+function submitToGoogleForm(formConfig,dataObj){
+  return new Promise(function(resolve){
+    var iframeName='hidden_submit_frame_'+Date.now();
+    var iframe=document.createElement('iframe');
+    iframe.name=iframeName;iframe.style.display='none';
+    document.body.appendChild(iframe);
+    var form=document.createElement('form');
+    form.action=formConfig.action;form.method='POST';form.target=iframeName;
+    var fieldKeys=Object.keys(formConfig.fields);
+    for(var i=0;i<fieldKeys.length;i++){
+      var key=fieldKeys[i];
+      var input=document.createElement('input');
+      input.type='hidden';input.name=formConfig.fields[key];input.value=dataObj[key]||'';
+      form.appendChild(input);
+    }
+    document.body.appendChild(form);
+    form.submit();
+    setTimeout(function(){form.remove();iframe.remove();resolve(true);},800);
+  });
+}
+
+function handlePartnerFormSubmit(){
+  var institution=document.getElementById('pfInstitution').value.trim();
+  var contactName=document.getElementById('pfContactName').value.trim();
+  var email=document.getElementById('pfEmail').value.trim();
+  var message=document.getElementById('pfMessage').value.trim();
+  var errorEl=document.getElementById('pfErrorMsg');
+  var successEl=document.getElementById('pfSuccessMsg');
+  if(!institution||!contactName||!email||!message){
+    errorEl.textContent='Please fill in all required fields (marked with *).';
+    errorEl.style.display='block';successEl.style.display='none';return;
+  }
+  var emailPattern=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if(!emailPattern.test(email)){
+    errorEl.textContent='Please enter a valid email address.';
+    errorEl.style.display='block';successEl.style.display='none';return;
+  }
+  errorEl.style.display='none';
+  var data={
+    institution:institution,contactName:contactName,designation:document.getElementById('pfDesignation').value.trim(),
+    email:email,phone:document.getElementById('pfPhone').value.trim(),department:document.getElementById('pfDepartment').value.trim(),
+    studentCount:document.getElementById('pfStudentCount').value.trim(),message:message
+  };
+  var submitBtn=document.getElementById('pfSubmitBtn');
+  if(submitBtn){submitBtn.disabled=true;submitBtn.textContent='Submitting...';}
+  submitToGoogleForm(GOOGLE_FORM_PARTNER,data).then(function(){
+    if(submitBtn){submitBtn.disabled=false;submitBtn.textContent='Submit Inquiry';}
+    var fieldIds=['pfInstitution','pfContactName','pfDesignation','pfEmail','pfPhone','pfDepartment','pfStudentCount','pfMessage'];
+    for(var i=0;i<fieldIds.length;i++){var el=document.getElementById(fieldIds[i]);if(el)el.value='';}
+    successEl.style.display='block';
+    setTimeout(function(){successEl.style.display='none';},5000);
+  });
+}
+
+function handleSpeakerApplySubmit(){
+  var name=document.getElementById('saName').value.trim();
+  var email=document.getElementById('saEmail').value.trim();
+  var role=document.getElementById('saRole').value.trim();
+  var org=document.getElementById('saOrg').value.trim();
+  var expertise=document.getElementById('saExpertise').value;
+  var message=document.getElementById('saMessage').value.trim();
+  var errorEl=document.getElementById('saErrorMsg');
+  var successEl=document.getElementById('saSuccessMsg');
+  if(!name||!email||!role||!org||!expertise||!message){
+    errorEl.textContent='Please fill in all required fields (marked with *).';
+    errorEl.style.display='block';successEl.style.display='none';return;
+  }
+  var emailPattern=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if(!emailPattern.test(email)){
+    errorEl.textContent='Please enter a valid email address.';
+    errorEl.style.display='block';successEl.style.display='none';return;
+  }
+  errorEl.style.display='none';
+  var data={
+    name:name,email:email,role:role,org:org,country:document.getElementById('saCountry').value.trim(),
+    experience:document.getElementById('saExperience').value.trim(),expertise:expertise,message:message,
+    linkedin:document.getElementById('saLinkedin').value.trim()
+  };
+  var submitBtn=document.getElementById('saSubmitBtn');
+  if(submitBtn){submitBtn.disabled=true;submitBtn.textContent='Submitting...';}
+  submitToGoogleForm(GOOGLE_FORM_SPEAKER,data).then(function(){
+    if(submitBtn){submitBtn.disabled=false;submitBtn.textContent='Submit Application';}
+    var fieldIds=['saName','saEmail','saRole','saOrg','saCountry','saExperience','saExpertise','saMessage','saLinkedin'];
+    for(var i=0;i<fieldIds.length;i++){var el=document.getElementById(fieldIds[i]);if(el)el.value='';}
+    successEl.style.display='block';
+    setTimeout(function(){successEl.style.display='none';},5000);
+  });
+}
+
+var PAGES=['home','sessions','speakers','library','about','partner','speakerapply'];
+
+function navigateTo(page){
+  if(PAGES.indexOf(page)===-1)page='home';
+  for(var i=0;i<PAGES.length;i++){
+    var el=document.getElementById('page-'+PAGES[i]);
+    if(el)el.classList.toggle('page-hidden',PAGES[i]!==page);
+  }
+  if(page==='speakers'&&leafletMapInstance){setTimeout(function(){leafletMapInstance.invalidateSize();},150);}
+  manageVideoPlayback(page);
+  var links=document.querySelectorAll('.nav-links a');
+  for(var j=0;j<links.length;j++){links[j].classList.toggle('active',links[j].dataset.page===page);}
+  if(page==='sessions'){renderSessions();}
+  if(page==='speakers'){renderFullSpeakerGrid();}
+  if(page==='library'){renderLibraryGrid();}
+  if(page==='about'){renderFoundersGrid();}
+  window.scrollTo({top:0,behavior:'auto'});
+  document.getElementById('navLinks').classList.remove('open');
+  window.location.hash=page;
+}
+
+window.addEventListener('hashchange',function(){
+  var page=window.location.hash.replace('#','')||'home';
+  navigateTo(page);
+});
+
+var navLinkEls=document.querySelectorAll('.nav-links a');
+for(var nl=0;nl<navLinkEls.length;nl++){
+  navLinkEls[nl].addEventListener('click',function(e){e.preventDefault();navigateTo(this.dataset.page);});
+}
+
+document.getElementById('navToggle').addEventListener('click',function(){
+  document.getElementById('navLinks').classList.toggle('open');
+});
+
+window.navigateTo=navigateTo;
+window.showToast=showToast;
+window.openSessionModal=openSessionModal;
+window.openSessionDetail=openSessionDetail;
+window.closeSessionDetail=closeSessionDetail;
+window.openImageLightbox=openImageLightbox;
+window.filterByCountry=filterByCountry;
+
+function initPage(){
+  setupLogoFallback('navLogoImg');
+  setupLogoFallback('footerLogoImg');
+  setupHeroVideoFallback();
+  attachSoundToggle('heroVideo','heroSoundToggle','heroVolumeSlider');
+  attachSoundToggle('aboutVideo','aboutSoundToggle','aboutVolumeSlider');
+  attachPlayOverlay('heroVideo','heroPlayOverlay');
+  attachPlayOverlay('aboutVideo','aboutPlayOverlay');
+  attachSeekBar('heroVideo','heroSeekBar','heroTimeLabel','heroPlayPauseBtn');
+  attachSeekBar('aboutVideo','aboutSeekBar','aboutTimeLabel','aboutPlayPauseBtn');
+  attachFullscreenToggle('heroVideo','heroImageWrap','heroFullscreenBtn');
+  attachFullscreenToggle('aboutVideo','aboutVideoWrap','aboutFullscreenBtn');
+  attachAutoHideControls('heroImageWrap','heroVideo');
+  attachAutoHideControls('aboutVideoWrap','aboutVideo');
+  attachEndedReset('heroVideo');
+  attachEndedReset('aboutVideo');
+  loadCampusPhotos();
+  loadAllSiteData();
+
+  var tabAll=document.getElementById('tabAll');
+  var tabUp=document.getElementById('tabUpcoming');
+  var tabPast=document.getElementById('tabPast');
+  var sessionTabBtns=[tabAll,tabUp,tabPast];
+  function setActiveSessionTab(tab,clickedBtn){
+    activeTab=tab;
+    for(var t=0;t<sessionTabBtns.length;t++){
+      if(sessionTabBtns[t])sessionTabBtns[t].classList.toggle('active',sessionTabBtns[t]===clickedBtn);
+    }
+    renderSessions();
+  }
+  if(tabAll)tabAll.addEventListener('click',function(){setActiveSessionTab('all',tabAll);});
+  if(tabUp)tabUp.addEventListener('click',function(){setActiveSessionTab('upcoming',tabUp);});
+  if(tabPast)tabPast.addEventListener('click',function(){setActiveSessionTab('past',tabPast);});
+
+  var sessionSearchEl=document.getElementById('sessionSearch');
+  if(sessionSearchEl)sessionSearchEl.addEventListener('input',renderSessions);
+
+  var speakerSearchEl=document.getElementById('speakerSearch');
+  if(speakerSearchEl)speakerSearchEl.addEventListener('input',renderFullSpeakerGrid);
+  var speakerExpEl=document.getElementById('speakerExpertiseFilter');
+  if(speakerExpEl)speakerExpEl.addEventListener('change',renderFullSpeakerGrid);
+  var speakerCountryEl=document.getElementById('speakerCountryFilter');
+  if(speakerCountryEl)speakerCountryEl.addEventListener('change',renderFullSpeakerGrid);
+  var speakerClearEl=document.getElementById('speakerClearFilters');
+  if(speakerClearEl)speakerClearEl.addEventListener('click',function(){
+    if(speakerSearchEl)speakerSearchEl.value='';
+    if(speakerExpEl)speakerExpEl.value='All';
+    if(speakerCountryEl)speakerCountryEl.value='All';
+    activeCountryFilter=null;
+    var titleEl=document.getElementById('mapSideTitle');
+    if(titleEl){titleEl.style.display='none';}
+    var subEl=document.getElementById('mapSideSub');
+    if(subEl){subEl.textContent='';}
+    var countryKeys=Object.keys(leafletMarkers);
+    for(var k=0;k<countryKeys.length;k++){
+      var entry=leafletMarkers[countryKeys[k]];
+      entry.marker.setIcon(entry.greenIcon);
+    }
+    var chips=document.querySelectorAll('.country-chip');
+    for(var c=0;c<chips.length;c++){chips[c].style.background='';chips[c].style.color='';}
+    renderFullSpeakerGrid();
+  });
+
+  var libSearchEl=document.getElementById('libSearch');
+  if(libSearchEl)libSearchEl.addEventListener('input',renderLibraryGrid);
+  var libBranchEl=document.getElementById('libBranchFilter');
+  if(libBranchEl)libBranchEl.addEventListener('change',renderLibraryGrid);
+  var libTypeEl=document.getElementById('libTypeFilter');
+  if(libTypeEl)libTypeEl.addEventListener('change',renderLibraryGrid);
+
+  var pfSubmitBtn=document.getElementById('pfSubmitBtn');
+  if(pfSubmitBtn)pfSubmitBtn.addEventListener('click',handlePartnerFormSubmit);
+  var saSubmitBtn=document.getElementById('saSubmitBtn');
+  if(saSubmitBtn)saSubmitBtn.addEventListener('click',handleSpeakerApplySubmit);
+
+  var imgLightboxOverlay=document.getElementById('imgLightboxOverlay');
+  var imgLightboxClose=document.getElementById('imgLightboxClose');
+  if(imgLightboxOverlay){
+    imgLightboxOverlay.addEventListener('click',function(e){
+      if(e.target===imgLightboxOverlay)closeImageLightbox();
+    });
+  }
+  if(imgLightboxClose)imgLightboxClose.addEventListener('click',closeImageLightbox);
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Escape')closeImageLightbox();
+  });
+  document.addEventListener('click',function(e){
+    var trigger=e.target.closest?e.target.closest('.lightbox-trigger'):null;
+    if(trigger&&trigger.dataset&&trigger.dataset.fullsrc){
+      openImageLightbox(trigger.dataset.fullsrc,trigger.dataset.caption);
+    }
+  });
+
+  var sessionsViewAllBtn=document.getElementById('sessionsViewAllBtn');
+  if(sessionsViewAllBtn)sessionsViewAllBtn.addEventListener('click',function(){sessionsShowAll=true;renderSessions();});
+  var speakersViewAllBtn=document.getElementById('speakersViewAllBtn');
+  if(speakersViewAllBtn)speakersViewAllBtn.addEventListener('click',function(){speakersShowAll=true;renderFullSpeakerGrid();});
+  var libraryViewAllBtn=document.getElementById('libraryViewAllBtn');
+  if(libraryViewAllBtn)libraryViewAllBtn.addEventListener('click',function(){libraryShowAll=true;renderLibraryGrid();});
+
+  var observer=new IntersectionObserver(function(entries){
+    entries.forEach(function(e){if(e.isIntersecting)e.target.classList.add('visible');});
+  },{threshold:0.12});
+  var revealEls=document.querySelectorAll('.reveal');
+  for(var r=0;r<revealEls.length;r++)observer.observe(revealEls[r]);
+
+  var initialPage=window.location.hash.replace('#','')||'home';
+  navigateTo(initialPage);
+}
+
+if(document.readyState==='complete'||document.readyState==='interactive'){initPage();}
+else{document.addEventListener('DOMContentLoaded',initPage);}
+</script>
+
+<!-- 
+DATA FILES (edit on GitHub to add content permanently):
+  data/speakers.json — speakers + founders (founder:true shows on About page)
+  data/sessions.json — sessions (status: "upcoming" or "completed")
+  data/library.json — resource library (add fileUrl for downloads)
+  data/campus.json — campus photos (url + caption per entry)
+
+ADMIN PANEL: removed for now (kept the site simpler — no password gate,
+no session-only edits). To add or update content, edit the JSON files
+in /data directly on GitHub, and upload matching images/files to the
+folders below. Crop before uploading:
+
+  Founder Photos        images/founders/   square 1:1, ~800x800px
+                         top of head ~12% from top, crop ends at collar
+  Speaker Photos         images/speakers/   square 1:1, ~400x400px
+  (non-founders)                            crop centered on the face
+                                             (displays as a circle)
+  Session Thumbnails    images/sessions/   landscape 16:9, ~800x450px
+  Logo                  images/Logo/       square 1:1, ~300x300px
+  Hero Video             Videos/intro.mp4   homepage hero, with poster
+                                             images/t2r-intro-poster.jpg
+  About Video            Videos/about.mp4   About page, with poster
+                                             images/t2r-about-poster.jpg
+                                             Both videos: landscape MP4,
+                                             muted+autoplay+loop by default,
+                                             with a sound toggle button.
+                                             H.264 codec required (not
+                                             HEVC/H.265 — unsupported in
+                                             most browsers besides Safari).
+  Campus Photos          images/campus/     landscape ~600x408px each
+                                             (slightly taller than 600x420),
+                                             listed in data/campus.json
+  Library Documents     —                  PDF preferred, link via
+                                             fileUrl in library.json
+
+  Tip: keep each image under ~200KB where possible.
+
+NO STUDENT LOGIN: removed intentionally. Session "Register" just
+collects name/email inline and shows a confirmation toast.
+
+GOOGLE FORMS: Partner and Speaker Apply forms submit directly to
+Google Forms via hidden iframe — see GOOGLE_FORM_PARTNER and
+GOOGLE_FORM_SPEAKER config objects.
+-->
+
+</body>
+</html>
